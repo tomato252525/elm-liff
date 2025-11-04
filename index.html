@@ -26,7 +26,10 @@
   <body>
     <div id="app">Loading...</div>
     <script>
-      window.app = Elm.Main.init({ node: document.getElementById('app') });
+      // Ensure deferred scripts (elm.js) have executed before calling Elm.Main.init
+      window.addEventListener('DOMContentLoaded', function () {
+        window.app = Elm.Main.init({ node: document.getElementById('app') });
+      });
     </script>
   </body>
 </html>
