@@ -13,11 +13,22 @@
     if (!LIFF_ID) {
       console.error('LIFF_ID is not configured.');
     }
+    if (typeof liff === 'undefined') {
+      console.error('LIFF SDK (liff) is not loaded.');
+    }
 
     async function getFreshIdToken() {
-      await liff.init({ liffId: LIFF_ID });
+      // Wrap init with timeout so we don't hang forever in non-LIFF environments
+      if (typeof liff === 'undefined') {
+        throw new Error('LIFF SDK not available');
+      }
+
+      const initPromise = liff.init({ liffId: LIFF_ID });
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('liff.init timeout')), 5000));
+      await Promise.race([initPromise, timeoutPromise]);
 
       if (!liff.isLoggedIn()) {
+        console.log('Not logged in; redirecting to LIFF login...');
         liff.login({ redirectUri: window.location.href });
         return null; // リダイレクト
       }
@@ -28,14 +39,27 @@
     }
 
     // Elm → JS
+    console.log('Registering liffRequest port handler');
     window.app.ports.liffRequest.subscribe(async (action) => {
+      console.log('liffRequest received:', action);
       if (action === 'init') {
         try {
           const idToken = await getFreshIdToken();
-          if (!idToken) return; // リダイレクト中
+          if (!idToken) {
+            console.log('getFreshIdToken returned null (probably redirecting)');
+            return; // リダイレクト中
+          }
+          console.log('Sending idToken to Elm (length=' + String(idToken.length) + ')');
           window.app.ports.liffResponse.send({ idToken });
         } catch (err) {
-          console.error(err);
+          console.error('Error during LIFF init/get token:', err);
+          try {
+            // Send an empty idToken so Elm receives a response and can show an error
+            window.app.ports.liffResponse.send({ idToken: '' });
+          } catch (e) {
+            console.error('Failed to send liffResponse fallback:', e);
+          }
+          // Also surface an alert to help debugging in dev
           alert('LIFF初期化に失敗しました: ' + (err.message || String(err)));
         }
       } else if (action === 'close') {
