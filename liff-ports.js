@@ -40,8 +40,10 @@
 
     // Elm → JS
     console.log('Registering liffRequest port handler');
+    var _receivedInit = false;
     window.app.ports.liffRequest.subscribe(async (action) => {
       console.log('liffRequest received:', action);
+      if (action === 'init') { _receivedInit = true; }
       if (action === 'init') {
         try {
           const idToken = await getFreshIdToken();
@@ -71,6 +73,20 @@
         }
       }
     });
+
+    // If Elm sent no 'init' shortly after subscription (race where Elm's initial
+    // outgoing Cmd was dropped), send a fallback empty liffResponse so Elm can
+    // progress to an error state instead of remaining stuck on Loading.
+    setTimeout(function () {
+      if (!_receivedInit) {
+        console.warn('No liffRequest received from Elm; sending fallback liffResponse');
+        try {
+          window.app.ports.liffResponse.send({ idToken: '' });
+        } catch (e) {
+          console.error('Failed to send fallback liffResponse:', e);
+        }
+      }
+    }, 100);
   }
 
   // Wait until Elm app and its ports are actually available.
