@@ -2,17 +2,31 @@
 <html lang="ja">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>LIFF × Elm Minimal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LIFF + Elm</title>
+
+    <!-- LIFF SDK（2系の安定版に追随） -->
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
+    <script defer src="./elm.js"></script>
+    <script defer src="./liff-ports.js"></script>
+
+    <!-- 環境ごとの設定 -->
+    <script>
+      window.APP_CONFIG = {
+        LIFF_ID: '2008402680-ZPy9zpAq'
+      };
+    </script>
+
+    <style>
+      html, body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+      #app { padding: 16px; }
+    </style>
   </head>
   <body>
     <div id="app">Loading...</div>
-
-    <!-- LIFF SDK -->
-    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-    <!-- Elm（ビルド後に生成） -->
-    <script src="./elm.js"></script>
-    <!-- アプリ起動スクリプト -->
-    <script src="./index.js"></script>
+    <script>
+      window.app = Elm.Main.init({ node: document.getElementById('app') });
+    </script>
   </body>
 </html>
