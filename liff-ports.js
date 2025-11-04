@@ -49,11 +49,33 @@
     });
   }
 
-  // If DOM is already parsed, run setup immediately; otherwise wait for DOMContentLoaded.
+  // Wait until Elm app and its ports are actually available.
+  // Some environments / ordering cause DOMContentLoaded listeners to run in an order
+  // that makes initialization racey; poll briefly for robustness.
+  function waitForElmPorts(timeoutMs = 3000, intervalMs = 50) {
+    var waited = 0;
+    if (window.app && window.app.ports) {
+      setupPorts();
+      return;
+    }
+    var id = setInterval(function () {
+      if (window.app && window.app.ports) {
+        clearInterval(id);
+        setupPorts();
+        return;
+      }
+      waited += intervalMs;
+      if (waited >= timeoutMs) {
+        clearInterval(id);
+        console.error('Timed out waiting for Elm app ports.');
+      }
+    }, intervalMs);
+  }
+
+  // Start waiting after DOM is parsed so that scripts which rely on DOM can run.
   if (document.readyState === 'complete' || document.readyState === 'interactive') {
-    // DOM parsed, but Elm init may still run on DOMContentLoaded — still safe to try.
-    setupPorts();
+    waitForElmPorts();
   } else {
-    window.addEventListener('DOMContentLoaded', setupPorts);
+    window.addEventListener('DOMContentLoaded', function () { waitForElmPorts(); });
   }
 })();
