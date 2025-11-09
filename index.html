@@ -1,35 +1,20 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ja">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>LIFF + Elm</title>
-
-    <!-- LIFF SDK（2系の安定版に追随） -->
-    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-
-    <script defer src="./elm.js"></script>
-    <script defer src="./liff-ports.js"></script>
-
-    <!-- 環境ごとの設定 -->
-    <script>
-      window.APP_CONFIG = {
-        LIFF_ID: '2008402680-ZPy9zpAq'
-      };
-    </script>
-
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elm LIFF App - UserID</title>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
-      html, body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
-      #app { padding: 16px; }
+        body {
+            margin: 0;
+            padding: 0;
+        }
     </style>
-  </head>
-  <body>
-    <div id="app">Loading...</div>
-    <script>
-      // Ensure deferred scripts (elm.js) have executed before calling Elm.Main.init
-      window.addEventListener('DOMContentLoaded', function () {
-        window.app = Elm.Main.init({ node: document.getElementById('app') });
-      });
-    </script>
-  </body>
+</head>
+<body>
+    <div id="app"></div>
+    <script src="elm.js"></script>
+    <script src="index.js"></script>
+</body>
 </html>
