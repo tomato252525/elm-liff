@@ -2,7 +2,7 @@
 (function () {
   const liffId = '2008402680-ZPy9zpAq'; // ← コンソールの LIFF ID に置き換え
 
-  const app = Elm.Main.init({ node: document.getElementById('root') });
+  const app = Elm.Main.init({ node: document.getElementById('app') });
 
   const sendError = (e) => {
     console.error(e);
