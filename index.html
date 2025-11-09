@@ -1,20 +1,15 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Elm LIFF App - UserID</title>
-    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-        }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Elm × LIFF (UserID only)</title>
+  <!-- defer を付けると DOM 解析完了後に、記述順で実行される -->
+  <script defer src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script defer src="elm.js"></script>
+  <script defer src="index.js"></script>
 </head>
 <body>
-    <div id="app"></div>
-    <script src="elm.js"></script>
-    <script src="index.js"></script>
+  <div id="root"></div>
 </body>
 </html>
