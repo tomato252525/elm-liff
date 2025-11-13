@@ -5167,37 +5167,67 @@ var $elm$core$Platform$Cmd$batch = _Platform_batch;
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
 var $author$project$Main$init = function (_v0) {
 	return _Utils_Tuple2(
-		{error: $elm$core$Maybe$Nothing, userId: $elm$core$Maybe$Nothing},
+		{error: $elm$core$Maybe$Nothing, verificationResult: $elm$core$Maybe$Nothing},
 		$elm$core$Platform$Cmd$none);
 };
 var $author$project$Main$GotError = function (a) {
 	return {$: 'GotError', a: a};
 };
-var $author$project$Main$GotUserId = function (a) {
-	return {$: 'GotUserId', a: a};
+var $author$project$Main$GotVerificationResult = function (a) {
+	return {$: 'GotVerificationResult', a: a};
 };
 var $elm$core$Platform$Sub$batch = _Platform_batch;
+var $elm$core$Basics$composeR = F3(
+	function (f, g, x) {
+		return g(
+			f(x));
+	});
+var $elm$json$Json$Decode$decodeValue = _Json_run;
+var $author$project$Main$VerificationResult = F3(
+	function (success, userId, message) {
+		return {message: message, success: success, userId: userId};
+	});
+var $elm$json$Json$Decode$bool = _Json_decodeBool;
+var $elm$json$Json$Decode$field = _Json_decodeField;
+var $elm$json$Json$Decode$map3 = _Json_map3;
 var $elm$json$Json$Decode$string = _Json_decodeString;
+var $author$project$Main$verificationResultDecoder = A4(
+	$elm$json$Json$Decode$map3,
+	$author$project$Main$VerificationResult,
+	A2($elm$json$Json$Decode$field, 'success', $elm$json$Json$Decode$bool),
+	A2($elm$json$Json$Decode$field, 'userId', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'message', $elm$json$Json$Decode$string));
+var $author$project$Main$decodeVerificationResult = function (value) {
+	var _v0 = A2($elm$json$Json$Decode$decodeValue, $author$project$Main$verificationResultDecoder, value);
+	if (_v0.$ === 'Ok') {
+		var result = _v0.a;
+		return result;
+	} else {
+		return {message: 'デコードエラー', success: false, userId: ''};
+	}
+};
 var $author$project$Main$deliverError = _Platform_incomingPort('deliverError', $elm$json$Json$Decode$string);
-var $author$project$Main$deliverUserId = _Platform_incomingPort('deliverUserId', $elm$json$Json$Decode$string);
+var $elm$json$Json$Decode$value = _Json_decodeValue;
+var $author$project$Main$deliverVerificationResult = _Platform_incomingPort('deliverVerificationResult', $elm$json$Json$Decode$value);
 var $author$project$Main$subscriptions = function (_v0) {
 	return $elm$core$Platform$Sub$batch(
 		_List_fromArray(
 			[
-				$author$project$Main$deliverUserId($author$project$Main$GotUserId),
+				$author$project$Main$deliverVerificationResult(
+				A2($elm$core$Basics$composeR, $author$project$Main$decodeVerificationResult, $author$project$Main$GotVerificationResult)),
 				$author$project$Main$deliverError($author$project$Main$GotError)
 			]));
 };
 var $author$project$Main$update = F2(
 	function (msg, model) {
-		if (msg.$ === 'GotUserId') {
-			var uid = msg.a;
+		if (msg.$ === 'GotVerificationResult') {
+			var result = msg.a;
 			return _Utils_Tuple2(
 				_Utils_update(
 					model,
 					{
 						error: $elm$core$Maybe$Nothing,
-						userId: $elm$core$Maybe$Just(uid)
+						verificationResult: $elm$core$Maybe$Just(result)
 					}),
 				$elm$core$Platform$Cmd$none);
 		} else {
@@ -5234,18 +5264,56 @@ var $author$project$Main$view = function (model) {
 		_List_fromArray(
 			[
 				function () {
-				var _v0 = _Utils_Tuple2(model.userId, model.error);
+				var _v0 = _Utils_Tuple2(model.verificationResult, model.error);
 				if (_v0.a.$ === 'Just') {
-					var uid = _v0.a.a;
-					return A2(
-						$elm$html$Html$code,
+					var result = _v0.a.a;
+					return result.success ? A2(
+						$elm$html$Html$div,
 						_List_fromArray(
 							[
-								$elm$html$Html$Attributes$class('font-mono text-lg bg-white shadow rounded px-3 py-2 text-gray-900')
+								$elm$html$Html$Attributes$class('text-center space-y-4')
 							]),
 						_List_fromArray(
 							[
-								$elm$html$Html$text(uid)
+								A2(
+								$elm$html$Html$div,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('text-green-600 font-semibold text-xl')
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text(result.message)
+									])),
+								A2(
+								$elm$html$Html$div,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('text-sm text-gray-500')
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text('LINE UserID:')
+									])),
+								A2(
+								$elm$html$Html$code,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('font-mono text-lg bg-white shadow rounded px-4 py-3 text-gray-900 block')
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text(result.userId)
+									]))
+							])) : A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class('text-red-600')
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('検証に失敗しました')
 							]));
 				} else {
 					if (_v0.b.$ === 'Nothing') {
@@ -5259,7 +5327,7 @@ var $author$project$Main$view = function (model) {
 								]),
 							_List_fromArray(
 								[
-									$elm$html$Html$text('Loading...')
+									$elm$html$Html$text('認証中...')
 								]));
 					} else {
 						var _v3 = _v0.a;
@@ -5268,11 +5336,30 @@ var $author$project$Main$view = function (model) {
 							$elm$html$Html$div,
 							_List_fromArray(
 								[
-									$elm$html$Html$Attributes$class('text-sm text-red-600')
+									$elm$html$Html$Attributes$class('bg-red-50 border border-red-200 rounded-lg p-4 max-w-md')
 								]),
 							_List_fromArray(
 								[
-									$elm$html$Html$text('Error: ' + e)
+									A2(
+									$elm$html$Html$div,
+									_List_fromArray(
+										[
+											$elm$html$Html$Attributes$class('text-sm font-semibold text-red-800 mb-2')
+										]),
+									_List_fromArray(
+										[
+											$elm$html$Html$text('エラー')
+										])),
+									A2(
+									$elm$html$Html$div,
+									_List_fromArray(
+										[
+											$elm$html$Html$Attributes$class('text-sm text-red-600')
+										]),
+									_List_fromArray(
+										[
+											$elm$html$Html$text(e)
+										]))
 								]));
 					}
 				}

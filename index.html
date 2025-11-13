@@ -3,15 +3,19 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Elm × LIFF (UserID only)</title>
+  <title>Elm × LIFF × Supabase</title>
 
   <!-- Tailwind（ビルド済みCSS） -->
   <link rel="stylesheet" href="styles.css">
 
-  <!-- defer で順序固定＆DOM構築後に実行 -->
+  <!-- LIFF SDK -->
   <script defer src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  
+  <!-- Elm -->
   <script defer src="elm.js"></script>
-  <script defer src="index.js"></script>
+  
+  <!-- index.js を type="module" で読み込み（Supabase ESM対応） -->
+  <script defer type="module" src="index.js"></script>
 </head>
 <body class="bg-gray-50">
   <div id="root"></div>
