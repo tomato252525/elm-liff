@@ -5173,6 +5173,9 @@ var $author$project$Main$init = function (_v0) {
 var $author$project$Main$GotError = function (a) {
 	return {$: 'GotError', a: a};
 };
+var $author$project$Main$GotUserData = function (a) {
+	return {$: 'GotUserData', a: a};
+};
 var $author$project$Main$GotVerificationResult = function (a) {
 	return {$: 'GotVerificationResult', a: a};
 };
@@ -5236,39 +5239,65 @@ var $author$project$Main$decodeVerificationResult = function (value) {
 var $author$project$Main$deliverError = _Platform_incomingPort('deliverError', $elm$json$Json$Decode$string);
 var $elm$json$Json$Decode$value = _Json_decodeValue;
 var $author$project$Main$deliverVerificationResult = _Platform_incomingPort('deliverVerificationResult', $elm$json$Json$Decode$value);
+var $author$project$Main$receiveUserData = _Platform_incomingPort('receiveUserData', $elm$json$Json$Decode$string);
 var $author$project$Main$subscriptions = function (_v0) {
 	return $elm$core$Platform$Sub$batch(
 		_List_fromArray(
 			[
 				$author$project$Main$deliverVerificationResult(
 				A2($elm$core$Basics$composeR, $author$project$Main$decodeVerificationResult, $author$project$Main$GotVerificationResult)),
-				$author$project$Main$deliverError($author$project$Main$GotError)
+				$author$project$Main$deliverError($author$project$Main$GotError),
+				$author$project$Main$receiveUserData($author$project$Main$GotUserData)
 			]));
 };
+var $elm$json$Json$Encode$string = _Json_wrap;
+var $author$project$Main$fetchUserData = _Platform_outgoingPort('fetchUserData', $elm$json$Json$Encode$string);
 var $author$project$Main$update = F2(
 	function (msg, model) {
-		if (msg.$ === 'GotVerificationResult') {
-			var result = msg.a;
-			return _Utils_Tuple2(
-				_Utils_update(
+		switch (msg.$) {
+			case 'GotVerificationResult':
+				var result = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							error: $elm$core$Maybe$Nothing,
+							verificationResult: $elm$core$Maybe$Just(result)
+						}),
+					$elm$core$Platform$Cmd$none);
+			case 'GotError':
+				var e = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							error: $elm$core$Maybe$Just(e)
+						}),
+					$elm$core$Platform$Cmd$none);
+			case 'FetchUserData':
+				var userId = msg.a;
+				return _Utils_Tuple2(
 					model,
-					{
-						error: $elm$core$Maybe$Nothing,
-						verificationResult: $elm$core$Maybe$Just(result)
-					}),
-				$elm$core$Platform$Cmd$none);
-		} else {
-			var e = msg.a;
-			return _Utils_Tuple2(
-				_Utils_update(
-					model,
-					{
-						error: $elm$core$Maybe$Just(e)
-					}),
-				$elm$core$Platform$Cmd$none);
+					$author$project$Main$fetchUserData(userId));
+			default:
+				var userId = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							verificationResult: $elm$core$Maybe$Just(
+								{
+									success: true,
+									user: {id: userId, isActive: false, lineUserId: userId, name: $elm$core$Maybe$Nothing, role: ''}
+								})
+						}),
+					$elm$core$Platform$Cmd$none);
 		}
 	});
-var $elm$json$Json$Encode$string = _Json_wrap;
+var $author$project$Main$FetchUserData = function (a) {
+	return {$: 'FetchUserData', a: a};
+};
+var $elm$html$Html$button = _VirtualDom_node('button');
 var $elm$html$Html$Attributes$stringProperty = F2(
 	function (key, string) {
 		return A2(
@@ -5279,6 +5308,23 @@ var $elm$html$Html$Attributes$stringProperty = F2(
 var $elm$html$Html$Attributes$class = $elm$html$Html$Attributes$stringProperty('className');
 var $elm$html$Html$code = _VirtualDom_node('code');
 var $elm$html$Html$div = _VirtualDom_node('div');
+var $elm$virtual_dom$VirtualDom$Normal = function (a) {
+	return {$: 'Normal', a: a};
+};
+var $elm$virtual_dom$VirtualDom$on = _VirtualDom_on;
+var $elm$html$Html$Events$on = F2(
+	function (event, decoder) {
+		return A2(
+			$elm$virtual_dom$VirtualDom$on,
+			event,
+			$elm$virtual_dom$VirtualDom$Normal(decoder));
+	});
+var $elm$html$Html$Events$onClick = function (msg) {
+	return A2(
+		$elm$html$Html$Events$on,
+		'click',
+		$elm$json$Json$Decode$succeed(msg));
+};
 var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
 var $author$project$Main$view = function (model) {
@@ -5321,6 +5367,18 @@ var $author$project$Main$view = function (model) {
 								_List_fromArray(
 									[
 										$elm$html$Html$text(result.user.lineUserId)
+									])),
+								A2(
+								$elm$html$Html$button,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('bg-blue-500 text-white px-4 py-2 rounded'),
+										$elm$html$Html$Events$onClick(
+										$author$project$Main$FetchUserData(result.user.lineUserId))
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text('ユーザー情報を取得')
 									]))
 							])) : A2(
 						$elm$html$Html$div,
