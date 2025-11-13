@@ -5183,27 +5183,54 @@ var $elm$core$Basics$composeR = F3(
 			f(x));
 	});
 var $elm$json$Json$Decode$decodeValue = _Json_run;
-var $author$project$Main$VerificationResult = F3(
-	function (success, userId, message) {
-		return {message: message, success: success, userId: userId};
+var $author$project$Main$VerificationResult = F2(
+	function (success, user) {
+		return {success: success, user: user};
 	});
 var $elm$json$Json$Decode$bool = _Json_decodeBool;
 var $elm$json$Json$Decode$field = _Json_decodeField;
-var $elm$json$Json$Decode$map3 = _Json_map3;
+var $author$project$Main$User = F5(
+	function (id, name, role, isActive, lineUserId) {
+		return {id: id, isActive: isActive, lineUserId: lineUserId, name: name, role: role};
+	});
+var $elm$json$Json$Decode$map5 = _Json_map5;
+var $elm$json$Json$Decode$null = _Json_decodeNull;
+var $elm$json$Json$Decode$oneOf = _Json_oneOf;
+var $elm$json$Json$Decode$nullable = function (decoder) {
+	return $elm$json$Json$Decode$oneOf(
+		_List_fromArray(
+			[
+				$elm$json$Json$Decode$null($elm$core$Maybe$Nothing),
+				A2($elm$json$Json$Decode$map, $elm$core$Maybe$Just, decoder)
+			]));
+};
 var $elm$json$Json$Decode$string = _Json_decodeString;
-var $author$project$Main$verificationResultDecoder = A4(
-	$elm$json$Json$Decode$map3,
+var $author$project$Main$userDecoder = A6(
+	$elm$json$Json$Decode$map5,
+	$author$project$Main$User,
+	A2($elm$json$Json$Decode$field, 'id', $elm$json$Json$Decode$string),
+	A2(
+		$elm$json$Json$Decode$field,
+		'name',
+		$elm$json$Json$Decode$nullable($elm$json$Json$Decode$string)),
+	A2($elm$json$Json$Decode$field, 'role', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'is_active', $elm$json$Json$Decode$bool),
+	A2($elm$json$Json$Decode$field, 'line_user_id', $elm$json$Json$Decode$string));
+var $author$project$Main$verificationResultDecoder = A3(
+	$elm$json$Json$Decode$map2,
 	$author$project$Main$VerificationResult,
 	A2($elm$json$Json$Decode$field, 'success', $elm$json$Json$Decode$bool),
-	A2($elm$json$Json$Decode$field, 'userId', $elm$json$Json$Decode$string),
-	A2($elm$json$Json$Decode$field, 'message', $elm$json$Json$Decode$string));
+	A2($elm$json$Json$Decode$field, 'user', $author$project$Main$userDecoder));
 var $author$project$Main$decodeVerificationResult = function (value) {
 	var _v0 = A2($elm$json$Json$Decode$decodeValue, $author$project$Main$verificationResultDecoder, value);
 	if (_v0.$ === 'Ok') {
 		var result = _v0.a;
 		return result;
 	} else {
-		return {message: 'デコードエラー', success: false, userId: ''};
+		return {
+			success: false,
+			user: {id: '', isActive: false, lineUserId: '', name: $elm$core$Maybe$Nothing, role: ''}
+		};
 	}
 };
 var $author$project$Main$deliverError = _Platform_incomingPort('deliverError', $elm$json$Json$Decode$string);
@@ -5279,16 +5306,6 @@ var $author$project$Main$view = function (model) {
 								$elm$html$Html$div,
 								_List_fromArray(
 									[
-										$elm$html$Html$Attributes$class('text-green-600 font-semibold text-xl')
-									]),
-								_List_fromArray(
-									[
-										$elm$html$Html$text(result.message)
-									])),
-								A2(
-								$elm$html$Html$div,
-								_List_fromArray(
-									[
 										$elm$html$Html$Attributes$class('text-sm text-gray-500')
 									]),
 								_List_fromArray(
@@ -5303,7 +5320,7 @@ var $author$project$Main$view = function (model) {
 									]),
 								_List_fromArray(
 									[
-										$elm$html$Html$text(result.userId)
+										$elm$html$Html$text(result.user.lineUserId)
 									]))
 							])) : A2(
 						$elm$html$Html$div,

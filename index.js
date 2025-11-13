@@ -7,7 +7,11 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
   // Supabaseクライアントのセットアップ
   const supabaseUrl = 'https://wgwkugelwynyzftcrcfd.supabase.co'
   const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indnd2t1Z2Vsd3lueXpmdGNyY2ZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI5MTMwNjgsImV4cCI6MjA3ODQ4OTA2OH0.WPUZs19aQ-aKZDPgBjf__9ivKxxaGZdX5CCuQuyKDmg'
-  const supabase = createClient(supabaseUrl, supabaseAnonKey)
+  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: { persistSession: false },
+  })
+
+  let db = null;
 
   window.addEventListener('DOMContentLoaded', () => {
     const node = document.getElementById('root');
@@ -24,6 +28,26 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
         typeof e === 'string' ? e : e?.message || 'Unknown error'
       );
     };
+
+    // Port: DB操作のサンプル（Elmから呼び出される）
+    app.ports.fetchUserData?.subscribe(async (userId) => {
+      if (!db) {
+        sendError('DB client is not initialized');
+        return;
+      }
+
+      try {
+        const { data, error } = await db
+          .from('users')
+          .select('*');
+
+        if (error) throw error;
+
+        app.ports.receiveUserData?.send(data);
+      } catch (e) {
+        sendError(e);
+      }
+    });
 
     liff
       .init({ liffId })
@@ -50,11 +74,19 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
           return;
         }
 
-        if (data.success && data.userId) {
+        const token = data.token; // 12h JWT
+        const user = data.user;   // 返却されたユーザー情報
+
+        // 2) DB 操作用（Authorization: Bearer <token> を付与）
+        db = createClient(supabaseUrl, supabaseAnonKey, {
+          auth: { persistSession: false },
+          global: { headers: { Authorization: `Bearer ${token}` } },
+        });
+
+        if (user && token) {
           app.ports.deliverVerificationResult.send({
             success: true,
-            userId: data.userId,
-            message: data.message
+            user: user,
           });
         } else {
           sendError(data.error || '検証に失敗しました。');
