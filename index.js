@@ -1,4 +1,3 @@
-// index.js
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
 
 (function () {
@@ -7,9 +6,6 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
   // Supabaseクライアントのセットアップ
   const supabaseUrl = 'https://wgwkugelwynyzftcrcfd.supabase.co'
   const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indnd2t1Z2Vsd3lueXpmdGNyY2ZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI5MTMwNjgsImV4cCI6MjA3ODQ4OTA2OH0.WPUZs19aQ-aKZDPgBjf__9ivKxxaGZdX5CCuQuyKDmg'
-  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-    auth: { persistSession: false },
-  })
 
   let db = null;
 
@@ -29,7 +25,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
       );
     };
 
-    // Port: DB操作のサンプル（Elmから呼び出される）
+    // Port: DB操作のサンプル(Elmから呼び出される)
     app.ports.fetchUserData?.subscribe(async (userId) => {
       if (!db) {
         sendError('DB client is not initialized');
@@ -64,45 +60,59 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
           return;
         }
 
-        // Supabase Edge Functionを呼び出し
-        const { data, error } = await supabase.functions.invoke('verify-liff-token', {
-          body: { idToken }
-        });
-
-        if (error) {
-          // error.context に実際のレスポンスが入っている場合がある
-          let errorDetails = error.message;
-          
-          // data にエラー詳細が含まれている可能性をチェック
-          if (data && data.error) {
-            errorDetails = data.error;
-            
-            // より詳細なメッセージがある場合
-            if (data.message) {
-              errorDetails = data.message;
+        // fetch APIを直接使用してエラー詳細を取得
+        try {
+          const response = await fetch(
+            `${supabaseUrl}/functions/v1/verify-liff-token`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${supabaseAnonKey}`
+              },
+              body: JSON.stringify({ idToken })
             }
+          );
+
+          const result = await response.json();
+
+          if (!response.ok) {
+            // エラーレスポンスの詳細を取得
+            const errorMessage = result.error || result.message || 'Token verification failed';
+            
+            // エラータイプに応じたメッセージ
+            const errorMessages = {
+              'account_deactivated': 'アカウントが無効化されています。',
+              'nonce_mismatch': 'セキュリティ検証に失敗しました。',
+              'no_sub_in_id_token': 'トークンが無効です。',
+              'select_failed': 'ユーザー情報の取得に失敗しました。',
+              'insert_failed': 'ユーザー登録に失敗しました。',
+              'idToken is required': 'トークンが必要です。',
+            };
+
+            sendError(`検証エラー: ${errorMessages[errorMessage] || errorMessage}`);
+            return;
           }
-          
-          sendError(`検証エラー: ${errorDetails}`);
-          return;
-        }
 
-        const token = data.token; // 12h JWT
-        const user = data.user;   // 返却されたユーザー情報
+          const token = result.token;
+          const user = result.user;
 
-        // 2) DB 操作用（Authorization: Bearer <token> を付与）
-        db = createClient(supabaseUrl, supabaseAnonKey, {
-          auth: { persistSession: false },
-          global: { headers: { Authorization: `Bearer ${token}` } },
-        });
-
-        if (user && token) {
-          app.ports.deliverVerificationResult.send({
-            success: true,
-            user: user,
+          // DB操作用クライアントを作成(Authorization: Bearer <token> を付与)
+          db = createClient(supabaseUrl, supabaseAnonKey, {
+            auth: { persistSession: false },
+            global: { headers: { Authorization: `Bearer ${token}` } },
           });
-        } else {
-          sendError(data.error || '検証に失敗しました。');
+
+          if (user && token) {
+            app.ports.deliverVerificationResult.send({
+              success: true,
+              user: user,
+            });
+          } else {
+            sendError('検証に失敗しました。');
+          }
+        } catch (e) {
+          sendError(`ネットワークエラー: ${e.message}`);
         }
       })
       .catch(sendError);
