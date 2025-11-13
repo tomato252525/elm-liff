@@ -70,7 +70,29 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
         });
 
         if (error) {
-          sendError(`検証エラー: ${error.message}`);
+          let msg = 'Unknown error';
+          let status;
+        
+          try {
+            // FunctionsHttpError の場合、Response が context に入っている
+            const res = error?.context?.response;
+            if (res) {
+              status = res.status;
+              let bodyText = await res.text(); // 先に text() で取り出してから JSON 解析
+              try {
+                const json = JSON.parse(bodyText);
+                msg = json.error || json.message || bodyText;
+              } catch (_) {
+                msg = bodyText || error.message;
+              }
+            } else {
+              msg = error.message;
+            }
+          } catch (_) {
+            msg = error.message || msg;
+          }
+        
+          sendError(`検証エラー(${status || 'N/A'}): ${msg}`);
           return;
         }
 
