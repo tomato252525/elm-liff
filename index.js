@@ -36,7 +36,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
         const { data, error } = await db
           .from('users')
           .select('*')
-          .eq('id', userId)
+          .eq('line_user_id', userId)
           .single();
 
         if (error) throw error;
