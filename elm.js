@@ -5237,8 +5237,34 @@ var $author$project$Main$subscriptions = function (_v0) {
 				A2($elm$core$Basics$composeR, $author$project$Main$decodeVerificationResult, $author$project$Main$UserRegistered))
 			]));
 };
+var $elm$json$Json$Encode$object = function (pairs) {
+	return _Json_wrap(
+		A3(
+			$elm$core$List$foldl,
+			F2(
+				function (_v0, obj) {
+					var k = _v0.a;
+					var v = _v0.b;
+					return A3(_Json_addField, k, v, obj);
+				}),
+			_Json_emptyObject(_Utils_Tuple0),
+			pairs));
+};
 var $elm$json$Json$Encode$string = _Json_wrap;
-var $author$project$Main$usernameRegistrationRequest = _Platform_outgoingPort('usernameRegistrationRequest', $elm$json$Json$Encode$string);
+var $author$project$Main$usernameRegistrationRequest = _Platform_outgoingPort(
+	'usernameRegistrationRequest',
+	function ($) {
+		return $elm$json$Json$Encode$object(
+			_List_fromArray(
+				[
+					_Utils_Tuple2(
+					'lineUserId',
+					$elm$json$Json$Encode$string($.lineUserId)),
+					_Utils_Tuple2(
+					'name',
+					$elm$json$Json$Encode$string($.name))
+				]));
+	});
 var $author$project$Main$update = F2(
 	function (msg, model) {
 		switch (msg.$) {
@@ -5271,9 +5297,11 @@ var $author$project$Main$update = F2(
 					$elm$core$Platform$Cmd$none);
 			case 'SubmitUsername':
 				var name = msg.a;
+				var lineUserId = msg.b;
 				return $elm$core$String$isEmpty(name) ? _Utils_Tuple2(model, $elm$core$Platform$Cmd$none) : _Utils_Tuple2(
 					model,
-					$author$project$Main$usernameRegistrationRequest(name));
+					$author$project$Main$usernameRegistrationRequest(
+						{lineUserId: lineUserId, name: name}));
 			default:
 				var user = msg.a;
 				return _Utils_Tuple2(
@@ -5289,9 +5317,10 @@ var $author$project$Main$update = F2(
 var $author$project$Main$ChangeUsernameInput = function (a) {
 	return {$: 'ChangeUsernameInput', a: a};
 };
-var $author$project$Main$SubmitUsername = function (a) {
-	return {$: 'SubmitUsername', a: a};
-};
+var $author$project$Main$SubmitUsername = F2(
+	function (a, b) {
+		return {$: 'SubmitUsername', a: a, b: b};
+	});
 var $elm$html$Html$button = _VirtualDom_node('button');
 var $elm$html$Html$Attributes$stringProperty = F2(
 	function (key, string) {
@@ -5431,8 +5460,10 @@ var $author$project$Main$view = function (model) {
 									[
 										$elm$html$Html$Attributes$class('bg-white shadow rounded-lg p-6 space-y-4'),
 										$elm$html$Html$Events$onSubmit(
-										$author$project$Main$SubmitUsername(
-											$elm$core$String$trim(model.usernameInput)))
+										A2(
+											$author$project$Main$SubmitUsername,
+											$elm$core$String$trim(model.usernameInput),
+											result.lineUserId))
 									]),
 								_List_fromArray(
 									[
