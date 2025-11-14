@@ -5192,11 +5192,11 @@ var $author$project$Main$VerificationResult = F2(
 	});
 var $elm$json$Json$Decode$bool = _Json_decodeBool;
 var $elm$json$Json$Decode$field = _Json_decodeField;
-var $author$project$Main$User = F5(
-	function (id, name, role, isActive, lineUserId) {
-		return {id: id, isActive: isActive, lineUserId: lineUserId, name: name, role: role};
+var $author$project$Main$User = F4(
+	function (id, name, role, lineUserId) {
+		return {id: id, lineUserId: lineUserId, name: name, role: role};
 	});
-var $elm$json$Json$Decode$map5 = _Json_map5;
+var $elm$json$Json$Decode$map4 = _Json_map4;
 var $elm$json$Json$Decode$null = _Json_decodeNull;
 var $elm$json$Json$Decode$oneOf = _Json_oneOf;
 var $elm$json$Json$Decode$nullable = function (decoder) {
@@ -5208,8 +5208,8 @@ var $elm$json$Json$Decode$nullable = function (decoder) {
 			]));
 };
 var $elm$json$Json$Decode$string = _Json_decodeString;
-var $author$project$Main$userDecoder = A6(
-	$elm$json$Json$Decode$map5,
+var $author$project$Main$userDecoder = A5(
+	$elm$json$Json$Decode$map4,
 	$author$project$Main$User,
 	A2($elm$json$Json$Decode$field, 'id', $elm$json$Json$Decode$string),
 	A2(
@@ -5217,7 +5217,6 @@ var $author$project$Main$userDecoder = A6(
 		'name',
 		$elm$json$Json$Decode$nullable($elm$json$Json$Decode$string)),
 	A2($elm$json$Json$Decode$field, 'role', $elm$json$Json$Decode$string),
-	A2($elm$json$Json$Decode$field, 'is_active', $elm$json$Json$Decode$bool),
 	A2($elm$json$Json$Decode$field, 'line_user_id', $elm$json$Json$Decode$string));
 var $author$project$Main$verificationResultDecoder = A3(
 	$elm$json$Json$Decode$map2,
@@ -5232,7 +5231,7 @@ var $author$project$Main$decodeVerificationResult = function (value) {
 	} else {
 		return {
 			success: false,
-			user: {id: '', isActive: false, lineUserId: '', name: $elm$core$Maybe$Nothing, role: ''}
+			user: {id: '', lineUserId: '', name: $elm$core$Maybe$Nothing, role: ''}
 		};
 	}
 };
@@ -5288,7 +5287,7 @@ var $author$project$Main$update = F2(
 							verificationResult: $elm$core$Maybe$Just(
 								{
 									success: true,
-									user: {id: userId, isActive: false, lineUserId: userId, name: $elm$core$Maybe$Nothing, role: ''}
+									user: {id: userId, lineUserId: userId, name: $elm$core$Maybe$Nothing, role: ''}
 								})
 						}),
 					$elm$core$Platform$Cmd$none);
