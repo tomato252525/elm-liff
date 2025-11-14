@@ -5167,17 +5167,17 @@ var $elm$core$Platform$Cmd$batch = _Platform_batch;
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
 var $author$project$Main$init = function (_v0) {
 	return _Utils_Tuple2(
-		{error: $elm$core$Maybe$Nothing, verificationResult: $elm$core$Maybe$Nothing},
+		{error: $elm$core$Maybe$Nothing, user: $elm$core$Maybe$Nothing, usernameInput: ''},
 		$elm$core$Platform$Cmd$none);
 };
 var $author$project$Main$GotError = function (a) {
 	return {$: 'GotError', a: a};
 };
-var $author$project$Main$GotUserData = function (a) {
-	return {$: 'GotUserData', a: a};
-};
 var $author$project$Main$GotVerificationResult = function (a) {
 	return {$: 'GotVerificationResult', a: a};
+};
+var $author$project$Main$UserRegistered = function (a) {
+	return {$: 'UserRegistered', a: a};
 };
 var $elm$core$Platform$Sub$batch = _Platform_batch;
 var $elm$core$Basics$composeR = F3(
@@ -5186,16 +5186,11 @@ var $elm$core$Basics$composeR = F3(
 			f(x));
 	});
 var $elm$json$Json$Decode$decodeValue = _Json_run;
-var $author$project$Main$VerificationResult = F2(
-	function (success, user) {
-		return {success: success, user: user};
-	});
-var $elm$json$Json$Decode$bool = _Json_decodeBool;
-var $elm$json$Json$Decode$field = _Json_decodeField;
 var $author$project$Main$User = F4(
 	function (id, name, role, lineUserId) {
 		return {id: id, lineUserId: lineUserId, name: name, role: role};
 	});
+var $elm$json$Json$Decode$field = _Json_decodeField;
 var $elm$json$Json$Decode$map4 = _Json_map4;
 var $elm$json$Json$Decode$null = _Json_decodeNull;
 var $elm$json$Json$Decode$oneOf = _Json_oneOf;
@@ -5218,27 +5213,19 @@ var $author$project$Main$userDecoder = A5(
 		$elm$json$Json$Decode$nullable($elm$json$Json$Decode$string)),
 	A2($elm$json$Json$Decode$field, 'role', $elm$json$Json$Decode$string),
 	A2($elm$json$Json$Decode$field, 'line_user_id', $elm$json$Json$Decode$string));
-var $author$project$Main$verificationResultDecoder = A3(
-	$elm$json$Json$Decode$map2,
-	$author$project$Main$VerificationResult,
-	A2($elm$json$Json$Decode$field, 'success', $elm$json$Json$Decode$bool),
-	A2($elm$json$Json$Decode$field, 'user', $author$project$Main$userDecoder));
 var $author$project$Main$decodeVerificationResult = function (value) {
-	var _v0 = A2($elm$json$Json$Decode$decodeValue, $author$project$Main$verificationResultDecoder, value);
+	var _v0 = A2($elm$json$Json$Decode$decodeValue, $author$project$Main$userDecoder, value);
 	if (_v0.$ === 'Ok') {
 		var result = _v0.a;
 		return result;
 	} else {
-		return {
-			success: false,
-			user: {id: '', lineUserId: '', name: $elm$core$Maybe$Nothing, role: ''}
-		};
+		return {id: '', lineUserId: '', name: $elm$core$Maybe$Nothing, role: ''};
 	}
 };
 var $author$project$Main$deliverError = _Platform_incomingPort('deliverError', $elm$json$Json$Decode$string);
 var $elm$json$Json$Decode$value = _Json_decodeValue;
 var $author$project$Main$deliverVerificationResult = _Platform_incomingPort('deliverVerificationResult', $elm$json$Json$Decode$value);
-var $author$project$Main$receiveUserData = _Platform_incomingPort('receiveUserData', $elm$json$Json$Decode$string);
+var $author$project$Main$usernameRegistrationResponse = _Platform_incomingPort('usernameRegistrationResponse', $elm$json$Json$Decode$value);
 var $author$project$Main$subscriptions = function (_v0) {
 	return $elm$core$Platform$Sub$batch(
 		_List_fromArray(
@@ -5246,11 +5233,12 @@ var $author$project$Main$subscriptions = function (_v0) {
 				$author$project$Main$deliverVerificationResult(
 				A2($elm$core$Basics$composeR, $author$project$Main$decodeVerificationResult, $author$project$Main$GotVerificationResult)),
 				$author$project$Main$deliverError($author$project$Main$GotError),
-				$author$project$Main$receiveUserData($author$project$Main$GotUserData)
+				$author$project$Main$usernameRegistrationResponse(
+				A2($elm$core$Basics$composeR, $author$project$Main$decodeVerificationResult, $author$project$Main$UserRegistered))
 			]));
 };
 var $elm$json$Json$Encode$string = _Json_wrap;
-var $author$project$Main$fetchUserData = _Platform_outgoingPort('fetchUserData', $elm$json$Json$Encode$string);
+var $author$project$Main$usernameRegistrationRequest = _Platform_outgoingPort('usernameRegistrationRequest', $elm$json$Json$Encode$string);
 var $author$project$Main$update = F2(
 	function (msg, model) {
 		switch (msg.$) {
@@ -5261,7 +5249,7 @@ var $author$project$Main$update = F2(
 						model,
 						{
 							error: $elm$core$Maybe$Nothing,
-							verificationResult: $elm$core$Maybe$Just(result)
+							user: $elm$core$Maybe$Just(result)
 						}),
 					$elm$core$Platform$Cmd$none);
 			case 'GotError':
@@ -5270,31 +5258,39 @@ var $author$project$Main$update = F2(
 					_Utils_update(
 						model,
 						{
-							error: $elm$core$Maybe$Just(e)
+							error: $elm$core$Maybe$Just(e),
+							user: $elm$core$Maybe$Nothing
 						}),
 					$elm$core$Platform$Cmd$none);
-			case 'FetchUserData':
-				var userId = msg.a;
+			case 'ChangeUsernameInput':
+				var name = msg.a;
 				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{usernameInput: name}),
+					$elm$core$Platform$Cmd$none);
+			case 'SubmitUsername':
+				var name = msg.a;
+				return $elm$core$String$isEmpty(name) ? _Utils_Tuple2(model, $elm$core$Platform$Cmd$none) : _Utils_Tuple2(
 					model,
-					$author$project$Main$fetchUserData(userId));
+					$author$project$Main$usernameRegistrationRequest(name));
 			default:
-				var userId = msg.a;
+				var user = msg.a;
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
 						{
-							verificationResult: $elm$core$Maybe$Just(
-								{
-									success: true,
-									user: {id: userId, lineUserId: userId, name: $elm$core$Maybe$Nothing, role: ''}
-								})
+							error: $elm$core$Maybe$Nothing,
+							user: $elm$core$Maybe$Just(user)
 						}),
 					$elm$core$Platform$Cmd$none);
 		}
 	});
-var $author$project$Main$FetchUserData = function (a) {
-	return {$: 'FetchUserData', a: a};
+var $author$project$Main$ChangeUsernameInput = function (a) {
+	return {$: 'ChangeUsernameInput', a: a};
+};
+var $author$project$Main$SubmitUsername = function (a) {
+	return {$: 'SubmitUsername', a: a};
 };
 var $elm$html$Html$button = _VirtualDom_node('button');
 var $elm$html$Html$Attributes$stringProperty = F2(
@@ -5306,26 +5302,80 @@ var $elm$html$Html$Attributes$stringProperty = F2(
 	});
 var $elm$html$Html$Attributes$class = $elm$html$Html$Attributes$stringProperty('className');
 var $elm$html$Html$code = _VirtualDom_node('code');
+var $elm$json$Json$Encode$bool = _Json_wrap;
+var $elm$html$Html$Attributes$boolProperty = F2(
+	function (key, bool) {
+		return A2(
+			_VirtualDom_property,
+			key,
+			$elm$json$Json$Encode$bool(bool));
+	});
+var $elm$html$Html$Attributes$disabled = $elm$html$Html$Attributes$boolProperty('disabled');
 var $elm$html$Html$div = _VirtualDom_node('div');
-var $elm$virtual_dom$VirtualDom$Normal = function (a) {
-	return {$: 'Normal', a: a};
+var $elm$html$Html$form = _VirtualDom_node('form');
+var $elm$html$Html$input = _VirtualDom_node('input');
+var $elm$html$Html$label = _VirtualDom_node('label');
+var $elm$core$Basics$neq = _Utils_notEqual;
+var $elm$html$Html$Events$alwaysStop = function (x) {
+	return _Utils_Tuple2(x, true);
+};
+var $elm$virtual_dom$VirtualDom$MayStopPropagation = function (a) {
+	return {$: 'MayStopPropagation', a: a};
 };
 var $elm$virtual_dom$VirtualDom$on = _VirtualDom_on;
-var $elm$html$Html$Events$on = F2(
+var $elm$html$Html$Events$stopPropagationOn = F2(
 	function (event, decoder) {
 		return A2(
 			$elm$virtual_dom$VirtualDom$on,
 			event,
-			$elm$virtual_dom$VirtualDom$Normal(decoder));
+			$elm$virtual_dom$VirtualDom$MayStopPropagation(decoder));
 	});
-var $elm$html$Html$Events$onClick = function (msg) {
+var $elm$json$Json$Decode$at = F2(
+	function (fields, decoder) {
+		return A3($elm$core$List$foldr, $elm$json$Json$Decode$field, decoder, fields);
+	});
+var $elm$html$Html$Events$targetValue = A2(
+	$elm$json$Json$Decode$at,
+	_List_fromArray(
+		['target', 'value']),
+	$elm$json$Json$Decode$string);
+var $elm$html$Html$Events$onInput = function (tagger) {
 	return A2(
-		$elm$html$Html$Events$on,
-		'click',
-		$elm$json$Json$Decode$succeed(msg));
+		$elm$html$Html$Events$stopPropagationOn,
+		'input',
+		A2(
+			$elm$json$Json$Decode$map,
+			$elm$html$Html$Events$alwaysStop,
+			A2($elm$json$Json$Decode$map, tagger, $elm$html$Html$Events$targetValue)));
 };
+var $elm$html$Html$Events$alwaysPreventDefault = function (msg) {
+	return _Utils_Tuple2(msg, true);
+};
+var $elm$virtual_dom$VirtualDom$MayPreventDefault = function (a) {
+	return {$: 'MayPreventDefault', a: a};
+};
+var $elm$html$Html$Events$preventDefaultOn = F2(
+	function (event, decoder) {
+		return A2(
+			$elm$virtual_dom$VirtualDom$on,
+			event,
+			$elm$virtual_dom$VirtualDom$MayPreventDefault(decoder));
+	});
+var $elm$html$Html$Events$onSubmit = function (msg) {
+	return A2(
+		$elm$html$Html$Events$preventDefaultOn,
+		'submit',
+		A2(
+			$elm$json$Json$Decode$map,
+			$elm$html$Html$Events$alwaysPreventDefault,
+			$elm$json$Json$Decode$succeed(msg)));
+};
+var $elm$html$Html$Attributes$placeholder = $elm$html$Html$Attributes$stringProperty('placeholder');
 var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
+var $elm$core$String$trim = _String_trim;
+var $elm$html$Html$Attributes$type_ = $elm$html$Html$Attributes$stringProperty('type');
+var $elm$html$Html$Attributes$value = $elm$html$Html$Attributes$stringProperty('value');
 var $author$project$Main$view = function (model) {
 	return A2(
 		$elm$html$Html$div,
@@ -5336,10 +5386,10 @@ var $author$project$Main$view = function (model) {
 		_List_fromArray(
 			[
 				function () {
-				var _v0 = _Utils_Tuple2(model.verificationResult, model.error);
+				var _v0 = _Utils_Tuple2(model.user, model.error);
 				if (_v0.a.$ === 'Just') {
 					var result = _v0.a.a;
-					return result.success ? A2(
+					return (!_Utils_eq(result.name, $elm$core$Maybe$Nothing)) ? A2(
 						$elm$html$Html$div,
 						_List_fromArray(
 							[
@@ -5365,29 +5415,71 @@ var $author$project$Main$view = function (model) {
 									]),
 								_List_fromArray(
 									[
-										$elm$html$Html$text(result.user.lineUserId)
-									])),
-								A2(
-								$elm$html$Html$button,
-								_List_fromArray(
-									[
-										$elm$html$Html$Attributes$class('bg-blue-500 text-white px-4 py-2 rounded'),
-										$elm$html$Html$Events$onClick(
-										$author$project$Main$FetchUserData(result.user.lineUserId))
-									]),
-								_List_fromArray(
-									[
-										$elm$html$Html$text('ユーザー情報を取得')
+										$elm$html$Html$text(result.lineUserId)
 									]))
 							])) : A2(
 						$elm$html$Html$div,
 						_List_fromArray(
 							[
-								$elm$html$Html$Attributes$class('text-red-600')
+								$elm$html$Html$Attributes$class('w-full max-w-md mx-auto')
 							]),
 						_List_fromArray(
 							[
-								$elm$html$Html$text('検証に失敗しました')
+								A2(
+								$elm$html$Html$form,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('bg-white shadow rounded-lg p-6 space-y-4'),
+										$elm$html$Html$Events$onSubmit(
+										$author$project$Main$SubmitUsername(
+											$elm$core$String$trim(model.usernameInput)))
+									]),
+								_List_fromArray(
+									[
+										A2(
+										$elm$html$Html$div,
+										_List_fromArray(
+											[
+												$elm$html$Html$Attributes$class('space-y-2')
+											]),
+										_List_fromArray(
+											[
+												A2(
+												$elm$html$Html$label,
+												_List_fromArray(
+													[
+														$elm$html$Html$Attributes$class('block text-sm font-medium text-gray-700')
+													]),
+												_List_fromArray(
+													[
+														$elm$html$Html$text('ユーザ名')
+													])),
+												A2(
+												$elm$html$Html$input,
+												_List_fromArray(
+													[
+														$elm$html$Html$Attributes$type_('text'),
+														$elm$html$Html$Attributes$placeholder('例: tanaka'),
+														$elm$html$Html$Attributes$value(model.usernameInput),
+														$elm$html$Html$Events$onInput($author$project$Main$ChangeUsernameInput),
+														$elm$html$Html$Attributes$class('w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500')
+													]),
+												_List_Nil)
+											])),
+										A2(
+										$elm$html$Html$button,
+										_List_fromArray(
+											[
+												$elm$html$Html$Attributes$type_('submit'),
+												$elm$html$Html$Attributes$class('w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition disabled:opacity-50 disabled:cursor-not-allowed'),
+												$elm$html$Html$Attributes$disabled(
+												$elm$core$String$trim(model.usernameInput) === '')
+											]),
+										_List_fromArray(
+											[
+												$elm$html$Html$text('登録する')
+											]))
+									]))
 							]));
 				} else {
 					if (_v0.b.$ === 'Nothing') {

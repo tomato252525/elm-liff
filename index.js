@@ -26,7 +26,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     };
 
     // Port: DB操作のサンプル(Elmから呼び出される)
-    app.ports.fetchUserData?.subscribe(async (userId) => {
+    app.ports.usernameRegistrationRequest?.subscribe(async (name) => {
       if (!db) {
         sendError('DB client is not initialized');
         return;
@@ -35,12 +35,16 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
       try {
         const { data, error } = await db
           .from('users')
-          .select('*')
+          .update({ name })
+          .select('id, name, role, line_user_id')
           .single();
 
         if (error) throw error;
+        if (!data) {
+          sendError('更新後のユーザデータが取得できませんでした。');
+        }
 
-        app.ports.receiveUserData?.send(data.id);
+        app.ports.receiveUserData?.send(data);
       } catch (e) {
         sendError(e);
       }
@@ -108,10 +112,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
           });
 
           if (user && token) {
-            app.ports.deliverVerificationResult.send({
-              success: true,
-              user: user,
-            });
+            app.ports.deliverVerificationResult.send(user);
           } else {
             sendError('検証に失敗しました。');
           }
