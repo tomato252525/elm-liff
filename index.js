@@ -35,11 +35,13 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
       try {
         const { data, error } = await db
           .from('users')
-          .select('*');
+          .select('*')
+          .eq('id', userId)
+          .single();
 
         if (error) throw error;
 
-        app.ports.receiveUserData?.send(data);
+        app.ports.receiveUserData?.send(data.id);
       } catch (e) {
         sendError(e);
       }
