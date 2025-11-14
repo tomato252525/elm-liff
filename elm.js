@@ -5416,106 +5416,107 @@ var $author$project$Main$view = function (model) {
 			[
 				function () {
 				var _v0 = _Utils_Tuple2(model.user, model.error);
-				if (_v0.a.$ === 'Just') {
-					var result = _v0.a.a;
-					return (!_Utils_eq(result.name, $elm$core$Maybe$Nothing)) ? A2(
-						$elm$html$Html$div,
-						_List_fromArray(
-							[
-								$elm$html$Html$Attributes$class('text-center space-y-4')
-							]),
-						_List_fromArray(
-							[
-								A2(
-								$elm$html$Html$div,
-								_List_fromArray(
-									[
-										$elm$html$Html$Attributes$class('text-sm text-gray-500')
-									]),
-								_List_fromArray(
-									[
-										$elm$html$Html$text('LINE UserID:')
-									])),
-								A2(
-								$elm$html$Html$code,
-								_List_fromArray(
-									[
-										$elm$html$Html$Attributes$class('font-mono text-lg bg-white shadow rounded px-4 py-3 text-gray-900 block')
-									]),
-								_List_fromArray(
-									[
-										$elm$html$Html$text(result.lineUserId)
-									]))
-							])) : A2(
-						$elm$html$Html$div,
-						_List_fromArray(
-							[
-								$elm$html$Html$Attributes$class('w-full max-w-md mx-auto')
-							]),
-						_List_fromArray(
-							[
-								A2(
-								$elm$html$Html$form,
-								_List_fromArray(
-									[
-										$elm$html$Html$Attributes$class('bg-white shadow rounded-lg p-6 space-y-4'),
-										$elm$html$Html$Events$onSubmit(
-										A2(
-											$author$project$Main$SubmitUsername,
-											$elm$core$String$trim(model.usernameInput),
-											result.lineUserId))
-									]),
-								_List_fromArray(
-									[
-										A2(
-										$elm$html$Html$div,
-										_List_fromArray(
-											[
-												$elm$html$Html$Attributes$class('space-y-2')
-											]),
-										_List_fromArray(
-											[
-												A2(
-												$elm$html$Html$label,
-												_List_fromArray(
-													[
-														$elm$html$Html$Attributes$class('block text-sm font-medium text-gray-700')
-													]),
-												_List_fromArray(
-													[
-														$elm$html$Html$text('ユーザ名')
-													])),
-												A2(
-												$elm$html$Html$input,
-												_List_fromArray(
-													[
-														$elm$html$Html$Attributes$type_('text'),
-														$elm$html$Html$Attributes$placeholder('例: tanaka'),
-														$elm$html$Html$Attributes$value(model.usernameInput),
-														$elm$html$Html$Events$onInput($author$project$Main$ChangeUsernameInput),
-														$elm$html$Html$Attributes$class('w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500')
-													]),
-												_List_Nil)
-											])),
-										A2(
-										$elm$html$Html$button,
-										_List_fromArray(
-											[
-												$elm$html$Html$Attributes$type_('submit'),
-												$elm$html$Html$Attributes$class('w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition disabled:opacity-50 disabled:cursor-not-allowed'),
-												$elm$html$Html$Attributes$disabled(
-												$elm$core$String$trim(model.usernameInput) === '')
-											]),
-										_List_fromArray(
-											[
-												$elm$html$Html$text('登録する')
-											]))
-									]))
-							]));
-				} else {
-					if (_v0.b.$ === 'Nothing') {
-						var _v1 = _v0.a;
-						var _v2 = _v0.b;
+				if (_v0.b.$ === 'Nothing') {
+					if (_v0.a.$ === 'Just') {
+						var result = _v0.a.a;
+						var _v1 = _v0.b;
+						return (!_Utils_eq(result.name, $elm$core$Maybe$Nothing)) ? A2(
+							$elm$html$Html$div,
+							_List_fromArray(
+								[
+									$elm$html$Html$Attributes$class('text-center space-y-4')
+								]),
+							_List_fromArray(
+								[
+									A2(
+									$elm$html$Html$div,
+									_List_fromArray(
+										[
+											$elm$html$Html$Attributes$class('text-sm text-gray-500')
+										]),
+									_List_fromArray(
+										[
+											$elm$html$Html$text('LINE UserID:')
+										])),
+									A2(
+									$elm$html$Html$code,
+									_List_fromArray(
+										[
+											$elm$html$Html$Attributes$class('font-mono text-lg bg-white shadow rounded px-4 py-3 text-gray-900 block')
+										]),
+									_List_fromArray(
+										[
+											$elm$html$Html$text(result.lineUserId)
+										]))
+								])) : A2(
+							$elm$html$Html$div,
+							_List_fromArray(
+								[
+									$elm$html$Html$Attributes$class('w-full max-w-md mx-auto')
+								]),
+							_List_fromArray(
+								[
+									A2(
+									$elm$html$Html$form,
+									_List_fromArray(
+										[
+											$elm$html$Html$Attributes$class('bg-white shadow rounded-lg p-6 space-y-4'),
+											$elm$html$Html$Events$onSubmit(
+											A2(
+												$author$project$Main$SubmitUsername,
+												$elm$core$String$trim(model.usernameInput),
+												result.lineUserId))
+										]),
+									_List_fromArray(
+										[
+											A2(
+											$elm$html$Html$div,
+											_List_fromArray(
+												[
+													$elm$html$Html$Attributes$class('space-y-2')
+												]),
+											_List_fromArray(
+												[
+													A2(
+													$elm$html$Html$label,
+													_List_fromArray(
+														[
+															$elm$html$Html$Attributes$class('block text-sm font-medium text-gray-700')
+														]),
+													_List_fromArray(
+														[
+															$elm$html$Html$text('ユーザ名')
+														])),
+													A2(
+													$elm$html$Html$input,
+													_List_fromArray(
+														[
+															$elm$html$Html$Attributes$type_('text'),
+															$elm$html$Html$Attributes$placeholder('例: tanaka'),
+															$elm$html$Html$Attributes$value(model.usernameInput),
+															$elm$html$Html$Events$onInput($author$project$Main$ChangeUsernameInput),
+															$elm$html$Html$Attributes$class('w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500')
+														]),
+													_List_Nil)
+												])),
+											A2(
+											$elm$html$Html$button,
+											_List_fromArray(
+												[
+													$elm$html$Html$Attributes$type_('submit'),
+													$elm$html$Html$Attributes$class('w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition disabled:opacity-50 disabled:cursor-not-allowed'),
+													$elm$html$Html$Attributes$disabled(
+													$elm$core$String$trim(model.usernameInput) === '')
+												]),
+											_List_fromArray(
+												[
+													$elm$html$Html$text('登録する')
+												]))
+										]))
+								]));
+					} else {
+						var _v2 = _v0.a;
+						var _v3 = _v0.b;
 						return A2(
 							$elm$html$Html$div,
 							_List_fromArray(
@@ -5526,39 +5527,38 @@ var $author$project$Main$view = function (model) {
 								[
 									$elm$html$Html$text('認証中...')
 								]));
-					} else {
-						var _v3 = _v0.a;
-						var e = _v0.b.a;
-						return A2(
-							$elm$html$Html$div,
-							_List_fromArray(
-								[
-									$elm$html$Html$Attributes$class('bg-red-50 border border-red-200 rounded-lg p-4 max-w-md')
-								]),
-							_List_fromArray(
-								[
-									A2(
-									$elm$html$Html$div,
-									_List_fromArray(
-										[
-											$elm$html$Html$Attributes$class('text-sm font-semibold text-red-800 mb-2')
-										]),
-									_List_fromArray(
-										[
-											$elm$html$Html$text('エラー')
-										])),
-									A2(
-									$elm$html$Html$div,
-									_List_fromArray(
-										[
-											$elm$html$Html$Attributes$class('text-sm text-red-600')
-										]),
-									_List_fromArray(
-										[
-											$elm$html$Html$text(e)
-										]))
-								]));
 					}
+				} else {
+					var e = _v0.b.a;
+					return A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class('bg-red-50 border border-red-200 rounded-lg p-4 max-w-md')
+							]),
+						_List_fromArray(
+							[
+								A2(
+								$elm$html$Html$div,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('text-sm font-semibold text-red-800 mb-2')
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text('エラー')
+									])),
+								A2(
+								$elm$html$Html$div,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('text-sm text-red-600')
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text(e)
+									]))
+							]));
 				}
 			}()
 			]));
