@@ -5163,11 +5163,12 @@ var $elm$core$Task$perform = F2(
 				A2($elm$core$Task$map, toMessage, task)));
 	});
 var $elm$browser$Browser$element = _Browser_element;
+var $author$project$Main$Loading = {$: 'Loading'};
 var $elm$core$Platform$Cmd$batch = _Platform_batch;
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
 var $author$project$Main$init = function (_v0) {
 	return _Utils_Tuple2(
-		{error: $elm$core$Maybe$Nothing, user: $elm$core$Maybe$Nothing, usernameInput: ''},
+		{error: $elm$core$Maybe$Nothing, page: $author$project$Main$Loading, user: $elm$core$Maybe$Nothing},
 		$elm$core$Platform$Cmd$none);
 };
 var $author$project$Main$GotError = function (a) {
@@ -5237,6 +5238,11 @@ var $author$project$Main$subscriptions = function (_v0) {
 				A2($elm$core$Basics$composeR, $author$project$Main$decodeVerificationResult, $author$project$Main$UserRegistered))
 			]));
 };
+var $author$project$Main$Home = {$: 'Home'};
+var $author$project$Main$Register = function (a) {
+	return {$: 'Register', a: a};
+};
+var $elm$core$Basics$neq = _Utils_notEqual;
 var $elm$json$Json$Encode$object = function (pairs) {
 	return _Json_wrap(
 		A3(
@@ -5270,11 +5276,20 @@ var $author$project$Main$update = F2(
 		switch (msg.$) {
 			case 'GotVerificationResult':
 				var result = msg.a;
-				return _Utils_Tuple2(
+				return (!_Utils_eq(result.name, $elm$core$Maybe$Nothing)) ? _Utils_Tuple2(
 					_Utils_update(
 						model,
 						{
 							error: $elm$core$Maybe$Nothing,
+							page: $author$project$Main$Home,
+							user: $elm$core$Maybe$Just(result)
+						}),
+					$elm$core$Platform$Cmd$none) : _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							error: $elm$core$Maybe$Nothing,
+							page: $author$project$Main$Register(''),
 							user: $elm$core$Maybe$Just(result)
 						}),
 					$elm$core$Platform$Cmd$none);
@@ -5284,8 +5299,7 @@ var $author$project$Main$update = F2(
 					_Utils_update(
 						model,
 						{
-							error: $elm$core$Maybe$Just(e),
-							user: $elm$core$Maybe$Nothing
+							error: $elm$core$Maybe$Just(e)
 						}),
 					$elm$core$Platform$Cmd$none);
 			case 'ChangeUsernameInput':
@@ -5293,7 +5307,9 @@ var $author$project$Main$update = F2(
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{usernameInput: name}),
+						{
+							page: $author$project$Main$Register(name)
+						}),
 					$elm$core$Platform$Cmd$none);
 			case 'SubmitUsername':
 				var name = msg.a;
@@ -5309,6 +5325,7 @@ var $author$project$Main$update = F2(
 						model,
 						{
 							error: $elm$core$Maybe$Nothing,
+							page: $author$project$Main$Home,
 							user: $elm$core$Maybe$Just(user)
 						}),
 					$elm$core$Platform$Cmd$none);
@@ -5342,9 +5359,16 @@ var $elm$html$Html$Attributes$boolProperty = F2(
 var $elm$html$Html$Attributes$disabled = $elm$html$Html$Attributes$boolProperty('disabled');
 var $elm$html$Html$div = _VirtualDom_node('div');
 var $elm$html$Html$form = _VirtualDom_node('form');
+var $author$project$Main$getLineUserId = function (targetUser) {
+	if (targetUser.$ === 'Just') {
+		var user = targetUser.a;
+		return user.lineUserId;
+	} else {
+		return '';
+	}
+};
 var $elm$html$Html$input = _VirtualDom_node('input');
 var $elm$html$Html$label = _VirtualDom_node('label');
-var $elm$core$Basics$neq = _Utils_notEqual;
 var $elm$html$Html$Events$alwaysStop = function (x) {
 	return _Utils_Tuple2(x, true);
 };
@@ -5415,12 +5439,10 @@ var $author$project$Main$view = function (model) {
 		_List_fromArray(
 			[
 				function () {
-				var _v0 = _Utils_Tuple2(model.user, model.error);
-				if (_v0.b.$ === 'Nothing') {
-					if (_v0.a.$ === 'Just') {
-						var result = _v0.a.a;
-						var _v1 = _v0.b;
-						return (!_Utils_eq(result.name, $elm$core$Maybe$Nothing)) ? A2(
+				var _v0 = model.page;
+				switch (_v0.$) {
+					case 'Home':
+						return A2(
 							$elm$html$Html$div,
 							_List_fromArray(
 								[
@@ -5446,9 +5468,13 @@ var $author$project$Main$view = function (model) {
 										]),
 									_List_fromArray(
 										[
-											$elm$html$Html$text(result.lineUserId)
+											$elm$html$Html$text(
+											$author$project$Main$getLineUserId(model.user))
 										]))
-								])) : A2(
+								]));
+					case 'Register':
+						var usernameInput = _v0.a;
+						return A2(
 							$elm$html$Html$div,
 							_List_fromArray(
 								[
@@ -5464,8 +5490,8 @@ var $author$project$Main$view = function (model) {
 											$elm$html$Html$Events$onSubmit(
 											A2(
 												$author$project$Main$SubmitUsername,
-												$elm$core$String$trim(model.usernameInput),
-												result.lineUserId))
+												$elm$core$String$trim(usernameInput),
+												$author$project$Main$getLineUserId(model.user)))
 										]),
 									_List_fromArray(
 										[
@@ -5492,8 +5518,8 @@ var $author$project$Main$view = function (model) {
 													_List_fromArray(
 														[
 															$elm$html$Html$Attributes$type_('text'),
-															$elm$html$Html$Attributes$placeholder('例: tanaka'),
-															$elm$html$Html$Attributes$value(model.usernameInput),
+															$elm$html$Html$Attributes$placeholder('源氏名を入力'),
+															$elm$html$Html$Attributes$value(usernameInput),
 															$elm$html$Html$Events$onInput($author$project$Main$ChangeUsernameInput),
 															$elm$html$Html$Attributes$class('w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500')
 														]),
@@ -5506,7 +5532,7 @@ var $author$project$Main$view = function (model) {
 													$elm$html$Html$Attributes$type_('submit'),
 													$elm$html$Html$Attributes$class('w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition disabled:opacity-50 disabled:cursor-not-allowed'),
 													$elm$html$Html$Attributes$disabled(
-													$elm$core$String$trim(model.usernameInput) === '')
+													$elm$core$String$trim(usernameInput) === '')
 												]),
 											_List_fromArray(
 												[
@@ -5514,9 +5540,7 @@ var $author$project$Main$view = function (model) {
 												]))
 										]))
 								]));
-					} else {
-						var _v2 = _v0.a;
-						var _v3 = _v0.b;
+					default:
 						return A2(
 							$elm$html$Html$div,
 							_List_fromArray(
@@ -5527,38 +5551,6 @@ var $author$project$Main$view = function (model) {
 								[
 									$elm$html$Html$text('認証中...')
 								]));
-					}
-				} else {
-					var e = _v0.b.a;
-					return A2(
-						$elm$html$Html$div,
-						_List_fromArray(
-							[
-								$elm$html$Html$Attributes$class('bg-red-50 border border-red-200 rounded-lg p-4 max-w-md')
-							]),
-						_List_fromArray(
-							[
-								A2(
-								$elm$html$Html$div,
-								_List_fromArray(
-									[
-										$elm$html$Html$Attributes$class('text-sm font-semibold text-red-800 mb-2')
-									]),
-								_List_fromArray(
-									[
-										$elm$html$Html$text('エラー')
-									])),
-								A2(
-								$elm$html$Html$div,
-								_List_fromArray(
-									[
-										$elm$html$Html$Attributes$class('text-sm text-red-600')
-									]),
-								_List_fromArray(
-									[
-										$elm$html$Html$text(e)
-									]))
-							]));
 				}
 			}()
 			]));
