@@ -45,7 +45,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
           sendError('更新後のユーザデータが取得できませんでした。');
         }
 
-        app.ports.receiveUserData?.send(data);
+        app.ports.usernameRegistrationResponse?.send(data);
       } catch (e) {
         sendError(e);
       }
