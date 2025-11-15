@@ -5367,6 +5367,23 @@ var $author$project$Main$getLineUserId = function (targetUser) {
 		return '';
 	}
 };
+var $elm$core$Maybe$withDefault = F2(
+	function (_default, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return value;
+		} else {
+			return _default;
+		}
+	});
+var $author$project$Main$getUserName = function (targetUser) {
+	if (targetUser.$ === 'Just') {
+		var user = targetUser.a;
+		return A2($elm$core$Maybe$withDefault, '未登録', user.name);
+	} else {
+		return '';
+	}
+};
 var $elm$html$Html$input = _VirtualDom_node('input');
 var $elm$html$Html$label = _VirtualDom_node('label');
 var $elm$html$Html$Events$alwaysStop = function (x) {
@@ -5470,6 +5487,27 @@ var $author$project$Main$view = function (model) {
 										[
 											$elm$html$Html$text(
 											$author$project$Main$getLineUserId(model.user))
+										])),
+									A2(
+									$elm$html$Html$div,
+									_List_fromArray(
+										[
+											$elm$html$Html$Attributes$class('text-sm text-gray-500')
+										]),
+									_List_fromArray(
+										[
+											$elm$html$Html$text('ユーザ名:')
+										])),
+									A2(
+									$elm$html$Html$code,
+									_List_fromArray(
+										[
+											$elm$html$Html$Attributes$class('font-mono text-lg bg-white shadow rounded px-4 py-3 text-gray-900 block')
+										]),
+									_List_fromArray(
+										[
+											$elm$html$Html$text(
+											$author$project$Main$getUserName(model.user))
 										]))
 								]));
 					case 'Register':
