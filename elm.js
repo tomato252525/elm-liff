@@ -5168,24 +5168,20 @@ var $elm$core$Platform$Cmd$batch = _Platform_batch;
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
 var $author$project$Main$init = function (_v0) {
 	return _Utils_Tuple2(
-		{error: $elm$core$Maybe$Nothing, page: $author$project$Main$Loading, user: $elm$core$Maybe$Nothing},
+		{appState: $author$project$Main$Loading, error: $elm$core$Maybe$Nothing},
 		$elm$core$Platform$Cmd$none);
 };
 var $author$project$Main$GotError = function (a) {
 	return {$: 'GotError', a: a};
 };
-var $author$project$Main$GotVerificationResult = function (a) {
-	return {$: 'GotVerificationResult', a: a};
-};
-var $author$project$Main$UserRegistered = function (a) {
-	return {$: 'UserRegistered', a: a};
-};
 var $elm$core$Platform$Sub$batch = _Platform_batch;
-var $elm$core$Basics$composeR = F3(
-	function (f, g, x) {
-		return g(
-			f(x));
-	});
+var $elm$json$Json$Decode$string = _Json_decodeString;
+var $author$project$Main$deliverError = _Platform_incomingPort('deliverError', $elm$json$Json$Decode$string);
+var $elm$json$Json$Decode$value = _Json_decodeValue;
+var $author$project$Main$deliverVerificationResult = _Platform_incomingPort('deliverVerificationResult', $elm$json$Json$Decode$value);
+var $author$project$Main$UserArrived = function (a) {
+	return {$: 'UserArrived', a: a};
+};
 var $elm$json$Json$Decode$decodeValue = _Json_run;
 var $author$project$Main$User = F4(
 	function (id, name, role, lineUserId) {
@@ -5203,7 +5199,6 @@ var $elm$json$Json$Decode$nullable = function (decoder) {
 				A2($elm$json$Json$Decode$map, $elm$core$Maybe$Just, decoder)
 			]));
 };
-var $elm$json$Json$Decode$string = _Json_decodeString;
 var $author$project$Main$userDecoder = A5(
 	$elm$json$Json$Decode$map4,
 	$author$project$Main$User,
@@ -5214,35 +5209,65 @@ var $author$project$Main$userDecoder = A5(
 		$elm$json$Json$Decode$nullable($elm$json$Json$Decode$string)),
 	A2($elm$json$Json$Decode$field, 'role', $elm$json$Json$Decode$string),
 	A2($elm$json$Json$Decode$field, 'line_user_id', $elm$json$Json$Decode$string));
-var $author$project$Main$decodeVerificationResult = function (value) {
-	var _v0 = A2($elm$json$Json$Decode$decodeValue, $author$project$Main$userDecoder, value);
-	if (_v0.$ === 'Ok') {
-		var result = _v0.a;
-		return result;
-	} else {
-		return {id: '', lineUserId: '', name: $elm$core$Maybe$Nothing, role: ''};
-	}
-};
-var $author$project$Main$deliverError = _Platform_incomingPort('deliverError', $elm$json$Json$Decode$string);
-var $elm$json$Json$Decode$value = _Json_decodeValue;
-var $author$project$Main$deliverVerificationResult = _Platform_incomingPort('deliverVerificationResult', $elm$json$Json$Decode$value);
+var $author$project$Main$fromUserPayload = F2(
+	function (source, value) {
+		var _v0 = A2($elm$json$Json$Decode$decodeValue, $author$project$Main$userDecoder, value);
+		if (_v0.$ === 'Ok') {
+			var user = _v0.a;
+			return $author$project$Main$UserArrived(user);
+		} else {
+			var err = _v0.a;
+			return $author$project$Main$GotError(
+				'Failed to decode ' + (source + (': ' + $elm$json$Json$Decode$errorToString(err))));
+		}
+	});
 var $author$project$Main$usernameRegistrationResponse = _Platform_incomingPort('usernameRegistrationResponse', $elm$json$Json$Decode$value);
 var $author$project$Main$subscriptions = function (_v0) {
 	return $elm$core$Platform$Sub$batch(
 		_List_fromArray(
 			[
 				$author$project$Main$deliverVerificationResult(
-				A2($elm$core$Basics$composeR, $author$project$Main$decodeVerificationResult, $author$project$Main$GotVerificationResult)),
-				$author$project$Main$deliverError($author$project$Main$GotError),
+				$author$project$Main$fromUserPayload('deliverVerificationResult')),
 				$author$project$Main$usernameRegistrationResponse(
-				A2($elm$core$Basics$composeR, $author$project$Main$decodeVerificationResult, $author$project$Main$UserRegistered))
+				$author$project$Main$fromUserPayload('usernameRegistrationResponse')),
+				$author$project$Main$deliverError($author$project$Main$GotError)
 			]));
 };
-var $author$project$Main$Home = {$: 'Home'};
 var $author$project$Main$Register = function (a) {
 	return {$: 'Register', a: a};
 };
-var $elm$core$Basics$neq = _Utils_notEqual;
+var $author$project$Main$Authenticated = F2(
+	function (a, b) {
+		return {$: 'Authenticated', a: a, b: b};
+	});
+var $author$project$Main$Home = {$: 'Home'};
+var $author$project$Main$setAuthenticated = F2(
+	function (user, model) {
+		var nextPage = function () {
+			var _v0 = user.name;
+			if (_v0.$ === 'Just') {
+				return $author$project$Main$Home;
+			} else {
+				return $author$project$Main$Register('');
+			}
+		}();
+		return _Utils_update(
+			model,
+			{
+				appState: A2($author$project$Main$Authenticated, user, nextPage),
+				error: $elm$core$Maybe$Nothing
+			});
+	});
+var $author$project$Main$setPage = F2(
+	function (newPage, state) {
+		if (state.$ === 'Authenticated') {
+			var user = state.a;
+			return A2($author$project$Main$Authenticated, user, newPage);
+		} else {
+			return $author$project$Main$Loading;
+		}
+	});
+var $elm$core$String$trim = _String_trim;
 var $elm$json$Json$Encode$object = function (pairs) {
 	return _Json_wrap(
 		A3(
@@ -5274,24 +5299,10 @@ var $author$project$Main$usernameRegistrationRequest = _Platform_outgoingPort(
 var $author$project$Main$update = F2(
 	function (msg, model) {
 		switch (msg.$) {
-			case 'GotVerificationResult':
-				var result = msg.a;
-				return (!_Utils_eq(result.name, $elm$core$Maybe$Nothing)) ? _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{
-							error: $elm$core$Maybe$Nothing,
-							page: $author$project$Main$Home,
-							user: $elm$core$Maybe$Just(result)
-						}),
-					$elm$core$Platform$Cmd$none) : _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{
-							error: $elm$core$Maybe$Nothing,
-							page: $author$project$Main$Register(''),
-							user: $elm$core$Maybe$Just(result)
-						}),
+			case 'UserArrived':
+				var user = msg.a;
+				return _Utils_Tuple2(
+					A2($author$project$Main$setAuthenticated, user, model),
 					$elm$core$Platform$Cmd$none);
 			case 'GotError':
 				var e = msg.a;
@@ -5308,36 +5319,31 @@ var $author$project$Main$update = F2(
 					_Utils_update(
 						model,
 						{
-							page: $author$project$Main$Register(name)
+							appState: A2(
+								$author$project$Main$setPage,
+								$author$project$Main$Register(name),
+								model.appState)
 						}),
 					$elm$core$Platform$Cmd$none);
-			case 'SubmitUsername':
-				var name = msg.a;
-				var lineUserId = msg.b;
-				return $elm$core$String$isEmpty(name) ? _Utils_Tuple2(model, $elm$core$Platform$Cmd$none) : _Utils_Tuple2(
-					model,
-					$author$project$Main$usernameRegistrationRequest(
-						{lineUserId: lineUserId, name: name}));
 			default:
-				var user = msg.a;
-				return _Utils_Tuple2(
-					_Utils_update(
+				var _v1 = model.appState;
+				if ((_v1.$ === 'Authenticated') && (_v1.b.$ === 'Register')) {
+					var user = _v1.a;
+					var usernameInput = _v1.b.a;
+					var trimmed = $elm$core$String$trim(usernameInput);
+					return $elm$core$String$isEmpty(trimmed) ? _Utils_Tuple2(model, $elm$core$Platform$Cmd$none) : _Utils_Tuple2(
 						model,
-						{
-							error: $elm$core$Maybe$Nothing,
-							page: $author$project$Main$Home,
-							user: $elm$core$Maybe$Just(user)
-						}),
-					$elm$core$Platform$Cmd$none);
+						$author$project$Main$usernameRegistrationRequest(
+							{lineUserId: user.lineUserId, name: trimmed}));
+				} else {
+					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+				}
 		}
 	});
 var $author$project$Main$ChangeUsernameInput = function (a) {
 	return {$: 'ChangeUsernameInput', a: a};
 };
-var $author$project$Main$SubmitUsername = F2(
-	function (a, b) {
-		return {$: 'SubmitUsername', a: a, b: b};
-	});
+var $author$project$Main$SubmitUsername = {$: 'SubmitUsername'};
 var $elm$html$Html$button = _VirtualDom_node('button');
 var $elm$html$Html$Attributes$stringProperty = F2(
 	function (key, string) {
@@ -5359,31 +5365,6 @@ var $elm$html$Html$Attributes$boolProperty = F2(
 var $elm$html$Html$Attributes$disabled = $elm$html$Html$Attributes$boolProperty('disabled');
 var $elm$html$Html$div = _VirtualDom_node('div');
 var $elm$html$Html$form = _VirtualDom_node('form');
-var $author$project$Main$getLineUserId = function (targetUser) {
-	if (targetUser.$ === 'Just') {
-		var user = targetUser.a;
-		return user.lineUserId;
-	} else {
-		return '';
-	}
-};
-var $elm$core$Maybe$withDefault = F2(
-	function (_default, maybe) {
-		if (maybe.$ === 'Just') {
-			var value = maybe.a;
-			return value;
-		} else {
-			return _default;
-		}
-	});
-var $author$project$Main$getUserName = function (targetUser) {
-	if (targetUser.$ === 'Just') {
-		var user = targetUser.a;
-		return A2($elm$core$Maybe$withDefault, '未登録', user.name);
-	} else {
-		return '';
-	}
-};
 var $elm$html$Html$input = _VirtualDom_node('input');
 var $elm$html$Html$label = _VirtualDom_node('label');
 var $elm$html$Html$Events$alwaysStop = function (x) {
@@ -5443,9 +5424,17 @@ var $elm$html$Html$Events$onSubmit = function (msg) {
 var $elm$html$Html$Attributes$placeholder = $elm$html$Html$Attributes$stringProperty('placeholder');
 var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
-var $elm$core$String$trim = _String_trim;
 var $elm$html$Html$Attributes$type_ = $elm$html$Html$Attributes$stringProperty('type');
 var $elm$html$Html$Attributes$value = $elm$html$Html$Attributes$stringProperty('value');
+var $elm$core$Maybe$withDefault = F2(
+	function (_default, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return value;
+		} else {
+			return _default;
+		}
+	});
 var $author$project$Main$view = function (model) {
 	return A2(
 		$elm$html$Html$div,
@@ -5456,9 +5445,22 @@ var $author$project$Main$view = function (model) {
 		_List_fromArray(
 			[
 				function () {
-				var _v0 = model.page;
-				switch (_v0.$) {
-					case 'Home':
+				var _v0 = model.appState;
+				if (_v0.$ === 'Loading') {
+					return A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class('text-gray-500 animate-pulse')
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('認証中...')
+							]));
+				} else {
+					var user = _v0.a;
+					var page = _v0.b;
+					if (page.$ === 'Home') {
 						return A2(
 							$elm$html$Html$div,
 							_List_fromArray(
@@ -5485,8 +5487,7 @@ var $author$project$Main$view = function (model) {
 										]),
 									_List_fromArray(
 										[
-											$elm$html$Html$text(
-											$author$project$Main$getLineUserId(model.user))
+											$elm$html$Html$text(user.lineUserId)
 										])),
 									A2(
 									$elm$html$Html$div,
@@ -5507,11 +5508,11 @@ var $author$project$Main$view = function (model) {
 									_List_fromArray(
 										[
 											$elm$html$Html$text(
-											$author$project$Main$getUserName(model.user))
+											A2($elm$core$Maybe$withDefault, '未登録', user.name))
 										]))
 								]));
-					case 'Register':
-						var usernameInput = _v0.a;
+					} else {
+						var usernameInput = page.a;
 						return A2(
 							$elm$html$Html$div,
 							_List_fromArray(
@@ -5525,11 +5526,7 @@ var $author$project$Main$view = function (model) {
 									_List_fromArray(
 										[
 											$elm$html$Html$Attributes$class('bg-white shadow rounded-lg p-6 space-y-4'),
-											$elm$html$Html$Events$onSubmit(
-											A2(
-												$author$project$Main$SubmitUsername,
-												$elm$core$String$trim(usernameInput),
-												$author$project$Main$getLineUserId(model.user)))
+											$elm$html$Html$Events$onSubmit($author$project$Main$SubmitUsername)
 										]),
 									_List_fromArray(
 										[
@@ -5578,17 +5575,7 @@ var $author$project$Main$view = function (model) {
 												]))
 										]))
 								]));
-					default:
-						return A2(
-							$elm$html$Html$div,
-							_List_fromArray(
-								[
-									$elm$html$Html$Attributes$class('text-gray-500 animate-pulse')
-								]),
-							_List_fromArray(
-								[
-									$elm$html$Html$text('認証中...')
-								]));
+					}
 				}
 			}()
 			]));
