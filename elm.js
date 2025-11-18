@@ -5182,13 +5182,18 @@ var $author$project$Main$deliverVerificationResult = _Platform_incomingPort('del
 var $author$project$Main$UserArrived = function (a) {
 	return {$: 'UserArrived', a: a};
 };
-var $elm$json$Json$Decode$decodeValue = _Json_run;
-var $author$project$Main$User = F4(
-	function (id, name, role, lineUserId) {
-		return {id: id, lineUserId: lineUserId, name: name, role: role};
+var $author$project$Main$Data = F2(
+	function (user, nextWeekShifts) {
+		return {nextWeekShifts: nextWeekShifts, user: user};
 	});
 var $elm$json$Json$Decode$field = _Json_decodeField;
-var $elm$json$Json$Decode$map4 = _Json_map4;
+var $elm$json$Json$Decode$list = _Json_decodeList;
+var $author$project$Main$Shift = F5(
+	function (id, date, startTime, endTime, isAvailable) {
+		return {date: date, endTime: endTime, id: id, isAvailable: isAvailable, startTime: startTime};
+	});
+var $elm$json$Json$Decode$bool = _Json_decodeBool;
+var $elm$json$Json$Decode$map5 = _Json_map5;
 var $elm$json$Json$Decode$null = _Json_decodeNull;
 var $elm$json$Json$Decode$oneOf = _Json_oneOf;
 var $elm$json$Json$Decode$nullable = function (decoder) {
@@ -5199,6 +5204,25 @@ var $elm$json$Json$Decode$nullable = function (decoder) {
 				A2($elm$json$Json$Decode$map, $elm$core$Maybe$Just, decoder)
 			]));
 };
+var $author$project$Main$shiftDecoder = A6(
+	$elm$json$Json$Decode$map5,
+	$author$project$Main$Shift,
+	A2($elm$json$Json$Decode$field, 'id', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'date', $elm$json$Json$Decode$string),
+	A2(
+		$elm$json$Json$Decode$field,
+		'start_time',
+		$elm$json$Json$Decode$nullable($elm$json$Json$Decode$string)),
+	A2(
+		$elm$json$Json$Decode$field,
+		'end_time',
+		$elm$json$Json$Decode$nullable($elm$json$Json$Decode$string)),
+	A2($elm$json$Json$Decode$field, 'is_available', $elm$json$Json$Decode$bool));
+var $author$project$Main$User = F4(
+	function (id, name, role, lineUserId) {
+		return {id: id, lineUserId: lineUserId, name: name, role: role};
+	});
+var $elm$json$Json$Decode$map4 = _Json_map4;
 var $author$project$Main$userDecoder = A5(
 	$elm$json$Json$Decode$map4,
 	$author$project$Main$User,
@@ -5209,12 +5233,21 @@ var $author$project$Main$userDecoder = A5(
 		$elm$json$Json$Decode$nullable($elm$json$Json$Decode$string)),
 	A2($elm$json$Json$Decode$field, 'role', $elm$json$Json$Decode$string),
 	A2($elm$json$Json$Decode$field, 'line_user_id', $elm$json$Json$Decode$string));
-var $author$project$Main$fromUserPayload = F2(
+var $author$project$Main$dataDecoder = A3(
+	$elm$json$Json$Decode$map2,
+	$author$project$Main$Data,
+	A2($elm$json$Json$Decode$field, 'user', $author$project$Main$userDecoder),
+	A2(
+		$elm$json$Json$Decode$field,
+		'next_week_shifts',
+		$elm$json$Json$Decode$list($author$project$Main$shiftDecoder)));
+var $elm$json$Json$Decode$decodeValue = _Json_run;
+var $author$project$Main$fromDataPayload = F2(
 	function (source, value) {
-		var _v0 = A2($elm$json$Json$Decode$decodeValue, $author$project$Main$userDecoder, value);
+		var _v0 = A2($elm$json$Json$Decode$decodeValue, $author$project$Main$dataDecoder, value);
 		if (_v0.$ === 'Ok') {
-			var user = _v0.a;
-			return $author$project$Main$UserArrived(user);
+			var data = _v0.a;
+			return $author$project$Main$UserArrived(data);
 		} else {
 			var err = _v0.a;
 			return $author$project$Main$GotError(
@@ -5227,9 +5260,9 @@ var $author$project$Main$subscriptions = function (_v0) {
 		_List_fromArray(
 			[
 				$author$project$Main$deliverVerificationResult(
-				$author$project$Main$fromUserPayload('deliverVerificationResult')),
+				$author$project$Main$fromDataPayload('deliverVerificationResult')),
 				$author$project$Main$usernameRegistrationResponse(
-				$author$project$Main$fromUserPayload('usernameRegistrationResponse')),
+				$author$project$Main$fromDataPayload('usernameRegistrationResponse')),
 				$author$project$Main$deliverError($author$project$Main$GotError)
 			]));
 };
@@ -5242,9 +5275,9 @@ var $author$project$Main$Authenticated = F2(
 	});
 var $author$project$Main$Home = {$: 'Home'};
 var $author$project$Main$setAuthenticated = F2(
-	function (user, model) {
+	function (data, model) {
 		var nextPage = function () {
-			var _v0 = user.name;
+			var _v0 = data.user.name;
 			if (_v0.$ === 'Just') {
 				return $author$project$Main$Home;
 			} else {
@@ -5254,7 +5287,7 @@ var $author$project$Main$setAuthenticated = F2(
 		return _Utils_update(
 			model,
 			{
-				appState: A2($author$project$Main$Authenticated, user, nextPage),
+				appState: A2($author$project$Main$Authenticated, data, nextPage),
 				error: $elm$core$Maybe$Nothing
 			});
 	});
@@ -5300,9 +5333,9 @@ var $author$project$Main$update = F2(
 	function (msg, model) {
 		switch (msg.$) {
 			case 'UserArrived':
-				var user = msg.a;
+				var data = msg.a;
 				return _Utils_Tuple2(
-					A2($author$project$Main$setAuthenticated, user, model),
+					A2($author$project$Main$setAuthenticated, data, model),
 					$elm$core$Platform$Cmd$none);
 			case 'GotError':
 				var e = msg.a;
@@ -5328,13 +5361,13 @@ var $author$project$Main$update = F2(
 			default:
 				var _v1 = model.appState;
 				if ((_v1.$ === 'Authenticated') && (_v1.b.$ === 'Register')) {
-					var user = _v1.a;
+					var data = _v1.a;
 					var usernameInput = _v1.b.a;
 					var trimmed = $elm$core$String$trim(usernameInput);
 					return $elm$core$String$isEmpty(trimmed) ? _Utils_Tuple2(model, $elm$core$Platform$Cmd$none) : _Utils_Tuple2(
 						model,
 						$author$project$Main$usernameRegistrationRequest(
-							{lineUserId: user.lineUserId, name: trimmed}));
+							{lineUserId: data.user.lineUserId, name: trimmed}));
 				} else {
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				}
@@ -5365,6 +5398,7 @@ var $elm$html$Html$Attributes$boolProperty = F2(
 var $elm$html$Html$Attributes$disabled = $elm$html$Html$Attributes$boolProperty('disabled');
 var $elm$html$Html$div = _VirtualDom_node('div');
 var $elm$html$Html$form = _VirtualDom_node('form');
+var $elm$html$Html$h2 = _VirtualDom_node('h2');
 var $elm$html$Html$input = _VirtualDom_node('input');
 var $elm$html$Html$label = _VirtualDom_node('label');
 var $elm$html$Html$Events$alwaysStop = function (x) {
@@ -5426,6 +5460,116 @@ var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
 var $elm$html$Html$Attributes$type_ = $elm$html$Html$Attributes$stringProperty('type');
 var $elm$html$Html$Attributes$value = $elm$html$Html$Attributes$stringProperty('value');
+var $elm$core$List$isEmpty = function (xs) {
+	if (!xs.b) {
+		return true;
+	} else {
+		return false;
+	}
+};
+var $elm$html$Html$p = _VirtualDom_node('p');
+var $author$project$Main$formatDate = function (dateStr) {
+	var _v0 = A2($elm$core$String$split, '-', dateStr);
+	if (((_v0.b && _v0.b.b) && _v0.b.b.b) && (!_v0.b.b.b.b)) {
+		var _v1 = _v0.b;
+		var month = _v1.a;
+		var _v2 = _v1.b;
+		var day = _v2.a;
+		return month + ('/' + day);
+	} else {
+		return dateStr;
+	}
+};
+var $elm$html$Html$span = _VirtualDom_node('span');
+var $author$project$Main$viewShift = function (shift) {
+	return A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				$elm$html$Html$Attributes$class('px-4 py-3 space-y-1')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$class('flex justify-between items-center')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$span,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class('font-medium text-gray-900')
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text(
+								$author$project$Main$formatDate(shift.date))
+							])),
+						A2(
+						$elm$html$Html$span,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class(
+								shift.isAvailable ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold')
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text(
+								shift.isAvailable ? '出勤可' : '出勤不可')
+							]))
+					])),
+				function () {
+				var _v0 = _Utils_Tuple2(shift.startTime, shift.endTime);
+				if ((_v0.a.$ === 'Just') && (_v0.b.$ === 'Just')) {
+					var start = _v0.a.a;
+					var end = _v0.b.a;
+					return A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class('text-sm text-gray-600')
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text(start + (' 〜 ' + end))
+							]));
+				} else {
+					return $elm$html$Html$text('');
+				}
+			}()
+			]));
+};
+var $author$project$Main$viewShifts = function (shifts) {
+	return $elm$core$List$isEmpty(shifts) ? A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				$elm$html$Html$Attributes$class('bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-3')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$p,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$class('text-yellow-800 font-medium')
+					]),
+				_List_fromArray(
+					[
+						$elm$html$Html$text('未提出')
+					]))
+			])) : A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				$elm$html$Html$Attributes$class('bg-white shadow rounded-lg divide-y divide-gray-200')
+			]),
+		A2($elm$core$List$map, $author$project$Main$viewShift, shifts));
+};
 var $elm$core$Maybe$withDefault = F2(
 	function (_default, maybe) {
 		if (maybe.$ === 'Just') {
@@ -5458,14 +5602,14 @@ var $author$project$Main$view = function (model) {
 								$elm$html$Html$text('認証中...')
 							]));
 				} else {
-					var user = _v0.a;
+					var data = _v0.a;
 					var page = _v0.b;
 					if (page.$ === 'Home') {
 						return A2(
 							$elm$html$Html$div,
 							_List_fromArray(
 								[
-									$elm$html$Html$Attributes$class('text-center space-y-4')
+									$elm$html$Html$Attributes$class('text-center space-y-6')
 								]),
 							_List_fromArray(
 								[
@@ -5473,42 +5617,71 @@ var $author$project$Main$view = function (model) {
 									$elm$html$Html$div,
 									_List_fromArray(
 										[
-											$elm$html$Html$Attributes$class('text-sm text-gray-500')
+											$elm$html$Html$Attributes$class('space-y-4')
 										]),
 									_List_fromArray(
 										[
-											$elm$html$Html$text('LINE UserID:')
-										])),
-									A2(
-									$elm$html$Html$code,
-									_List_fromArray(
-										[
-											$elm$html$Html$Attributes$class('font-mono text-lg bg-white shadow rounded px-4 py-3 text-gray-900 block')
-										]),
-									_List_fromArray(
-										[
-											$elm$html$Html$text(user.lineUserId)
+											A2(
+											$elm$html$Html$div,
+											_List_fromArray(
+												[
+													$elm$html$Html$Attributes$class('text-sm text-gray-500')
+												]),
+											_List_fromArray(
+												[
+													$elm$html$Html$text('LINE UserID:')
+												])),
+											A2(
+											$elm$html$Html$code,
+											_List_fromArray(
+												[
+													$elm$html$Html$Attributes$class('font-mono text-lg bg-white shadow rounded px-4 py-3 text-gray-900 block')
+												]),
+											_List_fromArray(
+												[
+													$elm$html$Html$text(data.user.lineUserId)
+												])),
+											A2(
+											$elm$html$Html$div,
+											_List_fromArray(
+												[
+													$elm$html$Html$Attributes$class('text-sm text-gray-500')
+												]),
+											_List_fromArray(
+												[
+													$elm$html$Html$text('ユーザ名:')
+												])),
+											A2(
+											$elm$html$Html$code,
+											_List_fromArray(
+												[
+													$elm$html$Html$Attributes$class('font-mono text-lg bg-white shadow rounded px-4 py-3 text-gray-900 block')
+												]),
+											_List_fromArray(
+												[
+													$elm$html$Html$text(
+													A2($elm$core$Maybe$withDefault, '未登録', data.user.name))
+												]))
 										])),
 									A2(
 									$elm$html$Html$div,
 									_List_fromArray(
 										[
-											$elm$html$Html$Attributes$class('text-sm text-gray-500')
+											$elm$html$Html$Attributes$class('mt-8 space-y-4')
 										]),
 									_List_fromArray(
 										[
-											$elm$html$Html$text('ユーザ名:')
-										])),
-									A2(
-									$elm$html$Html$code,
-									_List_fromArray(
-										[
-											$elm$html$Html$Attributes$class('font-mono text-lg bg-white shadow rounded px-4 py-3 text-gray-900 block')
-										]),
-									_List_fromArray(
-										[
-											$elm$html$Html$text(
-											A2($elm$core$Maybe$withDefault, '未登録', user.name))
+											A2(
+											$elm$html$Html$h2,
+											_List_fromArray(
+												[
+													$elm$html$Html$Attributes$class('text-xl font-bold text-gray-800')
+												]),
+											_List_fromArray(
+												[
+													$elm$html$Html$text('来週のシフト希望')
+												])),
+											$author$project$Main$viewShifts(data.nextWeekShifts)
 										]))
 								]));
 					} else {
