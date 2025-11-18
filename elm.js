@@ -5251,12 +5251,12 @@ var $author$project$Main$Data = F2(
 	});
 var $elm$json$Json$Decode$field = _Json_decodeField;
 var $elm$json$Json$Decode$list = _Json_decodeList;
-var $author$project$Main$Shift = F5(
-	function (id, date, startTime, endTime, isAvailable) {
-		return {date: date, endTime: endTime, id: id, isAvailable: isAvailable, startTime: startTime};
+var $author$project$Main$Shift = F6(
+	function (id, date, startTime, endTime, exitByEndTime, isAvailable) {
+		return {date: date, endTime: endTime, exitByEndTime: exitByEndTime, id: id, isAvailable: isAvailable, startTime: startTime};
 	});
 var $elm$json$Json$Decode$bool = _Json_decodeBool;
-var $elm$json$Json$Decode$map5 = _Json_map5;
+var $elm$json$Json$Decode$map6 = _Json_map6;
 var $elm$json$Json$Decode$null = _Json_decodeNull;
 var $elm$json$Json$Decode$oneOf = _Json_oneOf;
 var $elm$json$Json$Decode$nullable = function (decoder) {
@@ -5267,8 +5267,8 @@ var $elm$json$Json$Decode$nullable = function (decoder) {
 				A2($elm$json$Json$Decode$map, $elm$core$Maybe$Just, decoder)
 			]));
 };
-var $author$project$Main$shiftDecoder = A6(
-	$elm$json$Json$Decode$map5,
+var $author$project$Main$shiftDecoder = A7(
+	$elm$json$Json$Decode$map6,
 	$author$project$Main$Shift,
 	A2($elm$json$Json$Decode$field, 'id', $elm$json$Json$Decode$string),
 	A2($elm$json$Json$Decode$field, 'date', $elm$json$Json$Decode$string),
@@ -5280,6 +5280,10 @@ var $author$project$Main$shiftDecoder = A6(
 		$elm$json$Json$Decode$field,
 		'end_time',
 		$elm$json$Json$Decode$nullable($elm$json$Json$Decode$string)),
+	A2(
+		$elm$json$Json$Decode$field,
+		'exit_by_end_time',
+		$elm$json$Json$Decode$nullable($elm$json$Json$Decode$bool)),
 	A2($elm$json$Json$Decode$field, 'is_available', $elm$json$Json$Decode$bool));
 var $author$project$Main$User = F4(
 	function (id, name, role, lineUserId) {
@@ -6216,7 +6220,8 @@ var $author$project$Main$view = function (model) {
 							]),
 						_List_fromArray(
 							[
-								$elm$html$Html$text('認証中...')
+								$elm$html$Html$text(
+								A2($elm$core$Maybe$withDefault, '認証中...', model.error))
 							]));
 				} else {
 					var data = _v0.a;

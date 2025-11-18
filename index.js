@@ -67,7 +67,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
         const nextMondayDate = getNextMonday();
         const { data: shifts, error: shiftsError } = await db
           .from('shift_requests')
-          .select('id, date, start_time, end_time, is_available')
+          .select('id, date, start_time, end_time, exit_by_end_time, is_available')
           .eq('user_id', data.id)
           .eq('week_start_date', nextMondayDate)
           .order('date', { ascending: true });
@@ -152,7 +152,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
             // 来週のシフトデータを取得
             const { data: shifts, error: shiftsError } = await db
               .from('shift_requests')
-              .select('id, date, start_time, end_time, is_available')
+              .select('id, date, start_time, end_time, exit_by_end_time, is_available')
               .eq('user_id', user.id)
               .eq('week_start_date', nextMondayDate)
               .order('date', { ascending: true });
