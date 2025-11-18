@@ -9,6 +9,23 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
   let db = null;
 
+  // 来週の月曜日を計算する関数（日本時間基準）
+  const getNextMonday = () => {
+    // 日本時間での現在時刻を取得
+    const nowJST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }));
+    const dayOfWeek = nowJST.getDay(); // 0=日曜, 1=月曜, ..., 6=土曜
+    const daysUntilNextMonday = dayOfWeek === 0 ? 1 : 8 - dayOfWeek;
+    
+    const nextMonday = new Date(nowJST);
+    nextMonday.setDate(nowJST.getDate() + daysUntilNextMonday);
+    
+    // YYYY-MM-DD形式に変換（日本時間基準）
+    const year = nextMonday.getFullYear();
+    const month = String(nextMonday.getMonth() + 1).padStart(2, '0');
+    const day = String(nextMonday.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   window.addEventListener('DOMContentLoaded', () => {
     const node = document.getElementById('root');
     if (!node) {
@@ -43,9 +60,25 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
         if (error) throw error;
         if (!data) {
           sendError('更新後のユーザデータが取得できませんでした。');
+          return;
         }
 
-        app.ports.usernameRegistrationResponse?.send(data);
+        // ユーザ名更新後、再度来週のシフトデータを取得
+        const nextMondayDate = getNextMonday();
+        const { data: shifts, error: shiftsError } = await db
+          .from('shift_requests')
+          .select('id, date, start_time, end_time, is_available')
+          .eq('user_id', data.id)
+          .eq('week_start_date', nextMondayDate)
+          .order('date', { ascending: true });
+
+        if (shiftsError) throw shiftsError;
+
+        // 更新されたユーザ情報とシフトデータを送信
+        app.ports.usernameRegistrationResponse?.send({
+          user: data,
+          next_week_shifts: shifts || []
+        });
       } catch (e) {
         sendError(e);
       }
@@ -113,7 +146,27 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
           });
 
           if (user && token) {
-            app.ports.deliverVerificationResult.send(user);
+            // 来週の月曜日を計算
+            const nextMondayDate = getNextMonday();
+            
+            // 来週のシフトデータを取得
+            const { data: shifts, error: shiftsError } = await db
+              .from('shift_requests')
+              .select('id, date, start_time, end_time, is_available')
+              .eq('user_id', user.id)
+              .eq('week_start_date', nextMondayDate)
+              .order('date', { ascending: true });
+
+            if (shiftsError) {
+              sendError(`シフトデータの取得に失敗: ${shiftsError.message}`);
+              return;
+            }
+
+            // ユーザ情報と来週のシフトデータをElmに送信
+            app.ports.deliverVerificationResult.send({
+              user: user,
+              next_week_shifts: shifts || []
+            });
           } else {
             sendError('検証に失敗しました。');
           }
