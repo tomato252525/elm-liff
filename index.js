@@ -11,7 +11,6 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
   // 来週の月曜日を計算する関数（日本時間基準）
   const getNextMonday = () => {
-    // 日本時間での現在時刻を取得
     const nowJST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }));
     const dayOfWeek = nowJST.getDay(); // 0=日曜, 1=月曜, ..., 6=土曜
     const daysUntilNextMonday = dayOfWeek === 0 ? 1 : 8 - dayOfWeek;
@@ -24,6 +23,35 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     const month = String(nextMonday.getMonth() + 1).padStart(2, '0');
     const day = String(nextMonday.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
+  };
+
+  // 共通のユーザ情報とシフトデータを取得する関数
+  const fetchUserAndShifts = async (userId) => {
+    const nextMondayDate = getNextMonday();
+    
+    const { data: user, error: userError } = await db
+      .from('users')
+      .select('id, name, role, line_user_id')
+      .eq('id', userId)
+      .single();
+
+    if (userError) throw userError;
+    if (!user) throw new Error('ユーザが見つかりません。');
+
+    const { data: shifts, error: shiftsError } = await db
+      .from('shift_requests')
+      .select('id, date, start_time, end_time, exit_by_end_time, is_available')
+      .eq('user_id', userId)
+      .eq('week_start_date', nextMondayDate)
+      .order('date', { ascending: true });
+
+    if (shiftsError) throw shiftsError;
+
+    return {
+      user,
+      next_week_shifts: shifts || [],
+      week_start_date: nextMondayDate
+    };
   };
 
   window.addEventListener('DOMContentLoaded', () => {
@@ -54,7 +82,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
           .from('users')
           .update({ name })
           .eq('line_user_id', lineUserId)
-          .select('id, name, role, line_user_id')
+          .select('id')
           .single();
 
         if (error) throw error;
@@ -63,22 +91,54 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
           return;
         }
 
-        // ユーザ名更新後、再度来週のシフトデータを取得
-        const nextMondayDate = getNextMonday();
-        const { data: shifts, error: shiftsError } = await db
+        // 更新されたユーザ情報とシフトデータを取得
+        const result = await fetchUserAndShifts(data.id);
+        app.ports.usernameRegistrationResponse?.send(result);
+      } catch (e) {
+        sendError(e);
+      }
+    });
+
+    // シフト提出・更新処理
+    app.ports.shiftSubmitRequest?.subscribe(async (payload) => {
+      if (!db) {
+        sendError('DB client is not initialized');
+        return;
+      }
+
+      try {
+        const { user_id, week_start_date, shifts } = payload;
+
+        // トランザクション的な処理: 既存のシフトを削除してから新規挿入
+        // 1. 既存のシフトを削除
+        const { error: deleteError } = await db
           .from('shift_requests')
-          .select('id, date, start_time, end_time, exit_by_end_time, is_available')
-          .eq('user_id', data.id)
-          .eq('week_start_date', nextMondayDate)
-          .order('date', { ascending: true });
+          .delete()
+          .eq('user_id', user_id)
+          .eq('week_start_date', week_start_date);
 
-        if (shiftsError) throw shiftsError;
+        if (deleteError) throw deleteError;
 
-        // 更新されたユーザ情報とシフトデータを送信
-        app.ports.usernameRegistrationResponse?.send({
-          user: data,
-          next_week_shifts: shifts || []
-        });
+        // 2. 新しいシフトを挿入
+        const shiftsToInsert = shifts.map(shift => ({
+          user_id,
+          date: shift.date,
+          start_time: shift.start_time,
+          end_time: shift.end_time,
+          is_available: shift.is_available,
+          week_start_date,
+          exit_by_end_time: null // 必要に応じて設定
+        }));
+
+        const { error: insertError } = await db
+          .from('shift_requests')
+          .insert(shiftsToInsert);
+
+        if (insertError) throw insertError;
+
+        // 3. 更新後のデータを取得して返す
+        const result = await fetchUserAndShifts(user_id);
+        app.ports.shiftSubmitResponse?.send(result);
       } catch (e) {
         sendError(e);
       }
@@ -95,14 +155,12 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
           return;
         }
 
-        // IDトークンを取得
         const idToken = liff.getIDToken();
         if (!idToken) {
           sendError('IDトークンを取得できませんでした。');
           return;
         }
 
-        // fetch APIを直接使用してエラー詳細を取得
         try {
           const response = await fetch(
             `${supabaseUrl}/functions/v1/verify-liff-token`,
@@ -119,10 +177,8 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
           const result = await response.json();
 
           if (!response.ok) {
-            // エラーレスポンスの詳細を取得
             const errorMessage = result.error || result.message || 'Token verification failed';
             
-            // エラータイプに応じたメッセージ
             const errorMessages = {
               'account_deactivated': 'アカウントが無効化されています。',
               'nonce_mismatch': 'セキュリティ検証に失敗しました。',
@@ -139,17 +195,16 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
           const token = result.token;
           const user = result.user;
 
-          // DB操作用クライアントを作成(Authorization: Bearer <token> を付与)
+          // DB操作用クライアントを作成
           db = createClient(supabaseUrl, supabaseAnonKey, {
             auth: { persistSession: false },
             global: { headers: { Authorization: `Bearer ${token}` } },
           });
 
           if (user && token) {
-            // 来週の月曜日を計算
+            // ユーザ情報と来週のシフトデータを取得
             const nextMondayDate = getNextMonday();
             
-            // 来週のシフトデータを取得
             const { data: shifts, error: shiftsError } = await db
               .from('shift_requests')
               .select('id, date, start_time, end_time, exit_by_end_time, is_available')
@@ -165,7 +220,8 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
             // ユーザ情報と来週のシフトデータをElmに送信
             app.ports.deliverVerificationResult.send({
               user: user,
-              next_week_shifts: shifts || []
+              next_week_shifts: shifts || [],
+              week_start_date: nextMondayDate
             });
           } else {
             sendError('検証に失敗しました。');
