@@ -4420,6 +4420,43 @@ function _Time_getZoneName()
 		callback(_Scheduler_succeed(name));
 	});
 }
+
+
+
+var _Bitwise_and = F2(function(a, b)
+{
+	return a & b;
+});
+
+var _Bitwise_or = F2(function(a, b)
+{
+	return a | b;
+});
+
+var _Bitwise_xor = F2(function(a, b)
+{
+	return a ^ b;
+});
+
+function _Bitwise_complement(a)
+{
+	return ~a;
+};
+
+var _Bitwise_shiftLeftBy = F2(function(offset, a)
+{
+	return a << offset;
+});
+
+var _Bitwise_shiftRightBy = F2(function(offset, a)
+{
+	return a >> offset;
+});
+
+var _Bitwise_shiftRightZfBy = F2(function(offset, a)
+{
+	return a >>> offset;
+});
 var $elm$core$Basics$EQ = {$: 'EQ'};
 var $elm$core$Basics$LT = {$: 'LT'};
 var $elm$core$List$cons = _List_cons;
@@ -5231,7 +5268,7 @@ var $elm$time$Time$millisToPosix = $elm$time$Time$Posix;
 var $elm$time$Time$now = _Time_now($elm$time$Time$millisToPosix);
 var $author$project$Main$init = function (_v0) {
 	return _Utils_Tuple2(
-		{appState: $author$project$Main$Loading, error: $elm$core$Maybe$Nothing, showMonToWed: $elm$core$Maybe$Nothing},
+		{appState: $author$project$Main$Loading, error: $elm$core$Maybe$Nothing, isSubmitting: false, shiftInputs: _List_Nil, showMonToWed: $elm$core$Maybe$Nothing},
 		A2($elm$core$Task$perform, $author$project$Main$GotNow, $elm$time$Time$now));
 };
 var $author$project$Main$GotError = function (a) {
@@ -5242,15 +5279,19 @@ var $elm$json$Json$Decode$string = _Json_decodeString;
 var $author$project$Main$deliverError = _Platform_incomingPort('deliverError', $elm$json$Json$Decode$string);
 var $elm$json$Json$Decode$value = _Json_decodeValue;
 var $author$project$Main$deliverVerificationResult = _Platform_incomingPort('deliverVerificationResult', $elm$json$Json$Decode$value);
+var $author$project$Main$ShiftSubmitted = function (a) {
+	return {$: 'ShiftSubmitted', a: a};
+};
 var $author$project$Main$UserArrived = function (a) {
 	return {$: 'UserArrived', a: a};
 };
-var $author$project$Main$Data = F2(
-	function (user, nextWeekShifts) {
-		return {nextWeekShifts: nextWeekShifts, user: user};
+var $author$project$Main$Data = F3(
+	function (user, nextWeekShifts, weekStartDate) {
+		return {nextWeekShifts: nextWeekShifts, user: user, weekStartDate: weekStartDate};
 	});
 var $elm$json$Json$Decode$field = _Json_decodeField;
 var $elm$json$Json$Decode$list = _Json_decodeList;
+var $elm$json$Json$Decode$map3 = _Json_map3;
 var $author$project$Main$Shift = F6(
 	function (id, date, startTime, endTime, exitByEndTime, isAvailable) {
 		return {date: date, endTime: endTime, exitByEndTime: exitByEndTime, id: id, isAvailable: isAvailable, startTime: startTime};
@@ -5300,27 +5341,33 @@ var $author$project$Main$userDecoder = A5(
 		$elm$json$Json$Decode$nullable($elm$json$Json$Decode$string)),
 	A2($elm$json$Json$Decode$field, 'role', $elm$json$Json$Decode$string),
 	A2($elm$json$Json$Decode$field, 'line_user_id', $elm$json$Json$Decode$string));
-var $author$project$Main$dataDecoder = A3(
-	$elm$json$Json$Decode$map2,
+var $author$project$Main$dataDecoder = A4(
+	$elm$json$Json$Decode$map3,
 	$author$project$Main$Data,
 	A2($elm$json$Json$Decode$field, 'user', $author$project$Main$userDecoder),
 	A2(
 		$elm$json$Json$Decode$field,
 		'next_week_shifts',
-		$elm$json$Json$Decode$list($author$project$Main$shiftDecoder)));
+		$elm$json$Json$Decode$list($author$project$Main$shiftDecoder)),
+	A2($elm$json$Json$Decode$field, 'week_start_date', $elm$json$Json$Decode$string));
 var $elm$json$Json$Decode$decodeValue = _Json_run;
 var $author$project$Main$fromDataPayload = F2(
 	function (source, value) {
 		var _v0 = A2($elm$json$Json$Decode$decodeValue, $author$project$Main$dataDecoder, value);
 		if (_v0.$ === 'Ok') {
 			var data = _v0.a;
-			return $author$project$Main$UserArrived(data);
+			if (source === 'shiftSubmitResponse') {
+				return $author$project$Main$ShiftSubmitted(data);
+			} else {
+				return $author$project$Main$UserArrived(data);
+			}
 		} else {
 			var err = _v0.a;
 			return $author$project$Main$GotError(
 				'Failed to decode ' + (source + (': ' + $elm$json$Json$Decode$errorToString(err))));
 		}
 	});
+var $author$project$Main$shiftSubmitResponse = _Platform_incomingPort('shiftSubmitResponse', $elm$json$Json$Decode$value);
 var $author$project$Main$usernameRegistrationResponse = _Platform_incomingPort('usernameRegistrationResponse', $elm$json$Json$Decode$value);
 var $author$project$Main$subscriptions = function (_v0) {
 	return $elm$core$Platform$Sub$batch(
@@ -5330,6 +5377,8 @@ var $author$project$Main$subscriptions = function (_v0) {
 				$author$project$Main$fromDataPayload('deliverVerificationResult')),
 				$author$project$Main$usernameRegistrationResponse(
 				$author$project$Main$fromDataPayload('usernameRegistrationResponse')),
+				$author$project$Main$shiftSubmitResponse(
+				$author$project$Main$fromDataPayload('shiftSubmitResponse')),
 				$author$project$Main$deliverError($author$project$Main$GotError)
 			]));
 };
@@ -5347,6 +5396,241 @@ var $author$project$Main$Register = function (a) {
 };
 var $author$project$Main$Submitted = {$: 'Submitted'};
 var $author$project$Main$Unsubmitted = {$: 'Unsubmitted'};
+var $elm$json$Json$Encode$bool = _Json_wrap;
+var $elm$core$Basics$not = _Basics_not;
+var $elm$json$Json$Encode$null = _Json_encodeNull;
+var $elm$json$Json$Encode$object = function (pairs) {
+	return _Json_wrap(
+		A3(
+			$elm$core$List$foldl,
+			F2(
+				function (_v0, obj) {
+					var k = _v0.a;
+					var v = _v0.b;
+					return A3(_Json_addField, k, v, obj);
+				}),
+			_Json_emptyObject(_Utils_Tuple0),
+			pairs));
+};
+var $elm$json$Json$Encode$string = _Json_wrap;
+var $author$project$Main$encodeShiftInput = function (input) {
+	return $elm$json$Json$Encode$object(
+		_List_fromArray(
+			[
+				_Utils_Tuple2(
+				'date',
+				$elm$json$Json$Encode$string(input.date)),
+				_Utils_Tuple2(
+				'is_available',
+				$elm$json$Json$Encode$bool(input.isAvailable)),
+				_Utils_Tuple2(
+				'start_time',
+				(input.isAvailable && (!$elm$core$String$isEmpty(input.startTime))) ? $elm$json$Json$Encode$string(input.startTime) : $elm$json$Json$Encode$null),
+				_Utils_Tuple2(
+				'end_time',
+				(input.isAvailable && (!$elm$core$String$isEmpty(input.endTime))) ? $elm$json$Json$Encode$string(input.endTime) : $elm$json$Json$Encode$null)
+			]));
+};
+var $elm$json$Json$Encode$list = F2(
+	function (func, entries) {
+		return _Json_wrap(
+			A3(
+				$elm$core$List$foldl,
+				_Json_addEntry(func),
+				_Json_emptyArray(_Utils_Tuple0),
+				entries));
+	});
+var $author$project$Main$encodeShiftInputs = F3(
+	function (userId, weekStartDate, inputs) {
+		return $elm$json$Json$Encode$object(
+			_List_fromArray(
+				[
+					_Utils_Tuple2(
+					'user_id',
+					$elm$json$Json$Encode$string(userId)),
+					_Utils_Tuple2(
+					'week_start_date',
+					$elm$json$Json$Encode$string(weekStartDate)),
+					_Utils_Tuple2(
+					'shifts',
+					A2($elm$json$Json$Encode$list, $author$project$Main$encodeShiftInput, inputs))
+				]));
+	});
+var $elm$core$String$cons = _String_cons;
+var $elm$core$String$fromChar = function (_char) {
+	return A2($elm$core$String$cons, _char, '');
+};
+var $elm$core$Bitwise$and = _Bitwise_and;
+var $elm$core$Bitwise$shiftRightBy = _Bitwise_shiftRightBy;
+var $elm$core$String$repeatHelp = F3(
+	function (n, chunk, result) {
+		return (n <= 0) ? result : A3(
+			$elm$core$String$repeatHelp,
+			n >> 1,
+			_Utils_ap(chunk, chunk),
+			(!(n & 1)) ? result : _Utils_ap(result, chunk));
+	});
+var $elm$core$String$repeat = F2(
+	function (n, chunk) {
+		return A3($elm$core$String$repeatHelp, n, chunk, '');
+	});
+var $elm$core$String$padLeft = F3(
+	function (n, _char, string) {
+		return _Utils_ap(
+			A2(
+				$elm$core$String$repeat,
+				n - $elm$core$String$length(string),
+				$elm$core$String$fromChar(_char)),
+			string);
+	});
+var $author$project$Main$formatDateStr = F3(
+	function (year, month, day) {
+		return $elm$core$String$fromInt(year) + ('-' + (A3(
+			$elm$core$String$padLeft,
+			2,
+			_Utils_chr('0'),
+			$elm$core$String$fromInt(month)) + ('-' + A3(
+			$elm$core$String$padLeft,
+			2,
+			_Utils_chr('0'),
+			$elm$core$String$fromInt(day)))));
+	});
+var $elm$core$Basics$modBy = _Basics_modBy;
+var $elm$core$Basics$neq = _Utils_notEqual;
+var $author$project$Main$isLeapYear = function (year) {
+	return (!A2($elm$core$Basics$modBy, 4, year)) && ((!(!A2($elm$core$Basics$modBy, 100, year))) || (!A2($elm$core$Basics$modBy, 400, year)));
+};
+var $author$project$Main$getDaysInMonth = F2(
+	function (year, month) {
+		switch (month) {
+			case 1:
+				return 31;
+			case 2:
+				return $author$project$Main$isLeapYear(year) ? 29 : 28;
+			case 3:
+				return 31;
+			case 4:
+				return 30;
+			case 5:
+				return 31;
+			case 6:
+				return 30;
+			case 7:
+				return 31;
+			case 8:
+				return 31;
+			case 9:
+				return 30;
+			case 10:
+				return 31;
+			case 11:
+				return 30;
+			case 12:
+				return 31;
+			default:
+				return 30;
+		}
+	});
+var $author$project$Main$addDays = F4(
+	function (year, month, day, offset) {
+		var newDay = day + offset;
+		var daysInMonth = A2($author$project$Main$getDaysInMonth, year, month);
+		if (_Utils_cmp(newDay, daysInMonth) < 1) {
+			return A3($author$project$Main$formatDateStr, year, month, newDay);
+		} else {
+			var remainingDays = newDay - daysInMonth;
+			var nextMonth = month + 1;
+			return (nextMonth > 12) ? A3($author$project$Main$formatDateStr, year + 1, 1, remainingDays) : A3($author$project$Main$formatDateStr, year, nextMonth, remainingDays);
+		}
+	});
+var $author$project$Main$generateWeekDates = function (mondayStr) {
+	var _v0 = A2($elm$core$String$split, '-', mondayStr);
+	if (((_v0.b && _v0.b.b) && _v0.b.b.b) && (!_v0.b.b.b.b)) {
+		var yearStr = _v0.a;
+		var _v1 = _v0.b;
+		var monthStr = _v1.a;
+		var _v2 = _v1.b;
+		var dayStr = _v2.a;
+		var _v3 = _Utils_Tuple3(
+			$elm$core$String$toInt(yearStr),
+			$elm$core$String$toInt(monthStr),
+			$elm$core$String$toInt(dayStr));
+		if (((_v3.a.$ === 'Just') && (_v3.b.$ === 'Just')) && (_v3.c.$ === 'Just')) {
+			var year = _v3.a.a;
+			var month = _v3.b.a;
+			var day = _v3.c.a;
+			return A2(
+				$elm$core$List$map,
+				function (offset) {
+					return A4($author$project$Main$addDays, year, month, day, offset);
+				},
+				A2($elm$core$List$range, 0, 6));
+		} else {
+			return _List_Nil;
+		}
+	} else {
+		return _List_Nil;
+	}
+};
+var $elm$core$List$filter = F2(
+	function (isGood, list) {
+		return A3(
+			$elm$core$List$foldr,
+			F2(
+				function (x, xs) {
+					return isGood(x) ? A2($elm$core$List$cons, x, xs) : xs;
+				}),
+			_List_Nil,
+			list);
+	});
+var $elm$core$List$head = function (list) {
+	if (list.b) {
+		var x = list.a;
+		var xs = list.b;
+		return $elm$core$Maybe$Just(x);
+	} else {
+		return $elm$core$Maybe$Nothing;
+	}
+};
+var $author$project$Main$findShiftByDate = F2(
+	function (date, shifts) {
+		return $elm$core$List$head(
+			A2(
+				$elm$core$List$filter,
+				function (s) {
+					return _Utils_eq(s.date, date);
+				},
+				shifts));
+	});
+var $elm$core$Maybe$withDefault = F2(
+	function (_default, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return value;
+		} else {
+			return _default;
+		}
+	});
+var $author$project$Main$initializeShiftInputs = F2(
+	function (dates, existingShifts) {
+		return A2(
+			$elm$core$List$map,
+			function (date) {
+				var _v0 = A2($author$project$Main$findShiftByDate, date, existingShifts);
+				if (_v0.$ === 'Just') {
+					var shift = _v0.a;
+					return {
+						date: date,
+						endTime: A2($elm$core$Maybe$withDefault, '', shift.endTime),
+						isAvailable: shift.isAvailable,
+						startTime: A2($elm$core$Maybe$withDefault, '', shift.startTime)
+					};
+				} else {
+					return {date: date, endTime: '', isAvailable: true, startTime: ''};
+				}
+			},
+			dates);
+	});
 var $elm$core$List$isEmpty = function (xs) {
 	if (!xs.b) {
 		return true;
@@ -5366,7 +5650,6 @@ var $elm$time$Time$flooredDiv = F2(
 	function (numerator, denominator) {
 		return $elm$core$Basics$floor(numerator / denominator);
 	});
-var $elm$core$Basics$modBy = _Basics_modBy;
 var $elm$time$Time$posixToMillis = function (_v0) {
 	var millis = _v0.a;
 	return millis;
@@ -5521,27 +5804,14 @@ var $author$project$Main$setAuthenticated = F2(
 var $author$project$Main$setPage = F2(
 	function (newPage, state) {
 		if (state.$ === 'Authenticated') {
-			var user = state.a;
-			return A2($author$project$Main$Authenticated, user, newPage);
+			var data = state.a;
+			return A2($author$project$Main$Authenticated, data, newPage);
 		} else {
 			return $author$project$Main$Loading;
 		}
 	});
+var $author$project$Main$shiftSubmitRequest = _Platform_outgoingPort('shiftSubmitRequest', $elm$core$Basics$identity);
 var $elm$core$String$trim = _String_trim;
-var $elm$json$Json$Encode$object = function (pairs) {
-	return _Json_wrap(
-		A3(
-			$elm$core$List$foldl,
-			F2(
-				function (_v0, obj) {
-					var k = _v0.a;
-					var v = _v0.b;
-					return A3(_Json_addField, k, v, obj);
-				}),
-			_Json_emptyObject(_Utils_Tuple0),
-			pairs));
-};
-var $elm$json$Json$Encode$string = _Json_wrap;
 var $author$project$Main$usernameRegistrationRequest = _Platform_outgoingPort(
 	'usernameRegistrationRequest',
 	function ($) {
@@ -5580,7 +5850,8 @@ var $author$project$Main$update = F2(
 					_Utils_update(
 						model,
 						{
-							error: $elm$core$Maybe$Just(e)
+							error: $elm$core$Maybe$Just(e),
+							isSubmitting: false
 						}),
 					$elm$core$Platform$Cmd$none);
 			case 'ChangeUsernameInput':
@@ -5608,13 +5879,14 @@ var $author$project$Main$update = F2(
 				} else {
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				}
-			default:
+			case 'TogglePage':
 				var _v2 = model.appState;
 				if (_v2.$ === 'Authenticated') {
 					var data = _v2.a;
 					var page = _v2.b;
 					switch (page.$) {
 						case 'Home':
+							var weekDates = $author$project$Main$generateWeekDates(data.weekStartDate);
 							var shiftState = function () {
 								var _v4 = model.showMonToWed;
 								if (_v4.$ === 'Just') {
@@ -5627,6 +5899,7 @@ var $author$project$Main$update = F2(
 									return $author$project$Main$Unsubmitted;
 								}
 							}();
+							var initialInputs = A2($author$project$Main$initializeShiftInputs, weekDates, data.nextWeekShifts);
 							return _Utils_Tuple2(
 								_Utils_update(
 									model,
@@ -5634,7 +5907,8 @@ var $author$project$Main$update = F2(
 										appState: A2(
 											$author$project$Main$Authenticated,
 											data,
-											$author$project$Main$NextWeekShiftPage(shiftState))
+											$author$project$Main$NextWeekShiftPage(shiftState)),
+										shiftInputs: initialInputs
 									}),
 								$elm$core$Platform$Cmd$none);
 						case 'NextWeekShiftPage':
@@ -5651,14 +5925,77 @@ var $author$project$Main$update = F2(
 				} else {
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				}
+			case 'UpdateShiftAvailability':
+				var date = msg.a;
+				var isAvailable = msg.b;
+				var updateInput = function (input) {
+					return _Utils_eq(input.date, date) ? _Utils_update(
+						input,
+						{isAvailable: isAvailable}) : input;
+				};
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							shiftInputs: A2($elm$core$List$map, updateInput, model.shiftInputs)
+						}),
+					$elm$core$Platform$Cmd$none);
+			case 'UpdateShiftStartTime':
+				var date = msg.a;
+				var time = msg.b;
+				var updateInput = function (input) {
+					return _Utils_eq(input.date, date) ? _Utils_update(
+						input,
+						{startTime: time}) : input;
+				};
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							shiftInputs: A2($elm$core$List$map, updateInput, model.shiftInputs)
+						}),
+					$elm$core$Platform$Cmd$none);
+			case 'UpdateShiftEndTime':
+				var date = msg.a;
+				var time = msg.b;
+				var updateInput = function (input) {
+					return _Utils_eq(input.date, date) ? _Utils_update(
+						input,
+						{endTime: time}) : input;
+				};
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							shiftInputs: A2($elm$core$List$map, updateInput, model.shiftInputs)
+						}),
+					$elm$core$Platform$Cmd$none);
+			case 'SubmitShifts':
+				var _v5 = model.appState;
+				if (_v5.$ === 'Authenticated') {
+					var data = _v5.a;
+					var shiftsJson = A3($author$project$Main$encodeShiftInputs, data.user.id, data.weekStartDate, model.shiftInputs);
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{isSubmitting: true}),
+						$author$project$Main$shiftSubmitRequest(shiftsJson));
+				} else {
+					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+				}
+			default:
+				var data = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							appState: A2($author$project$Main$Authenticated, data, $author$project$Main$Home),
+							isSubmitting: false,
+							shiftInputs: _List_Nil
+						}),
+					$elm$core$Platform$Cmd$none);
 		}
 	});
-var $author$project$Main$ChangeUsernameInput = function (a) {
-	return {$: 'ChangeUsernameInput', a: a};
-};
-var $author$project$Main$SubmitUsername = {$: 'SubmitUsername'};
-var $author$project$Main$TogglePage = {$: 'TogglePage'};
-var $elm$html$Html$button = _VirtualDom_node('button');
 var $elm$html$Html$Attributes$stringProperty = F2(
 	function (key, string) {
 		return A2(
@@ -5667,21 +6004,13 @@ var $elm$html$Html$Attributes$stringProperty = F2(
 			$elm$json$Json$Encode$string(string));
 	});
 var $elm$html$Html$Attributes$class = $elm$html$Html$Attributes$stringProperty('className');
-var $elm$html$Html$code = _VirtualDom_node('code');
-var $elm$json$Json$Encode$bool = _Json_wrap;
-var $elm$html$Html$Attributes$boolProperty = F2(
-	function (key, bool) {
-		return A2(
-			_VirtualDom_property,
-			key,
-			$elm$json$Json$Encode$bool(bool));
-	});
-var $elm$html$Html$Attributes$disabled = $elm$html$Html$Attributes$boolProperty('disabled');
 var $elm$html$Html$div = _VirtualDom_node('div');
-var $elm$html$Html$form = _VirtualDom_node('form');
+var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
+var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
+var $author$project$Main$TogglePage = {$: 'TogglePage'};
+var $elm$html$Html$button = _VirtualDom_node('button');
+var $elm$html$Html$h1 = _VirtualDom_node('h1');
 var $elm$html$Html$h2 = _VirtualDom_node('h2');
-var $elm$html$Html$input = _VirtualDom_node('input');
-var $elm$html$Html$label = _VirtualDom_node('label');
 var $elm$virtual_dom$VirtualDom$Normal = function (a) {
 	return {$: 'Normal', a: a};
 };
@@ -5699,6 +6028,336 @@ var $elm$html$Html$Events$onClick = function (msg) {
 		'click',
 		$elm$json$Json$Decode$succeed(msg));
 };
+var $elm$html$Html$span = _VirtualDom_node('span');
+var $author$project$Main$viewShiftStatusBadge = function (shifts) {
+	return $elm$core$List$isEmpty(shifts) ? A2(
+		$elm$html$Html$span,
+		_List_fromArray(
+			[
+				$elm$html$Html$Attributes$class('px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium')
+			]),
+		_List_fromArray(
+			[
+				$elm$html$Html$text('未提出')
+			])) : A2(
+		$elm$html$Html$span,
+		_List_fromArray(
+			[
+				$elm$html$Html$Attributes$class('px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium')
+			]),
+		_List_fromArray(
+			[
+				$elm$html$Html$text('提出済')
+			]));
+};
+var $elm$html$Html$p = _VirtualDom_node('p');
+var $elm$core$Maybe$map = F2(
+	function (f, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return $elm$core$Maybe$Just(
+				f(value));
+		} else {
+			return $elm$core$Maybe$Nothing;
+		}
+	});
+var $author$project$Main$formatDate = function (dateStr) {
+	var _v0 = A2($elm$core$String$split, '-', dateStr);
+	if (((_v0.b && _v0.b.b) && _v0.b.b.b) && (!_v0.b.b.b.b)) {
+		var _v1 = _v0.b;
+		var month = _v1.a;
+		var _v2 = _v1.b;
+		var day = _v2.a;
+		return A2(
+			$elm$core$Maybe$withDefault,
+			dateStr,
+			A2(
+				$elm$core$Maybe$map,
+				function (m) {
+					return $elm$core$String$fromInt(m) + ('/' + day);
+				},
+				$elm$core$String$toInt(month)));
+	} else {
+		return dateStr;
+	}
+};
+var $author$project$Main$getWeekdayFromDate = function (dateStr) {
+	var _v0 = A2($elm$core$String$split, '-', dateStr);
+	if (((_v0.b && _v0.b.b) && _v0.b.b.b) && (!_v0.b.b.b.b)) {
+		var yearStr = _v0.a;
+		var _v1 = _v0.b;
+		var monthStr = _v1.a;
+		var _v2 = _v1.b;
+		var dayStr = _v2.a;
+		var _v3 = _Utils_Tuple3(
+			$elm$core$String$toInt(yearStr),
+			$elm$core$String$toInt(monthStr),
+			$elm$core$String$toInt(dayStr));
+		if (((_v3.a.$ === 'Just') && (_v3.b.$ === 'Just')) && (_v3.c.$ === 'Just')) {
+			var y = _v3.a.a;
+			var m = _v3.b.a;
+			var d = _v3.c.a;
+			var q = d;
+			var adjustedYear = (m < 3) ? (y - 1) : y;
+			var j = (adjustedYear / 100) | 0;
+			var k = A2($elm$core$Basics$modBy, 100, adjustedYear);
+			var adjustedMonth = (m < 3) ? (m + 12) : m;
+			var m_ = adjustedMonth;
+			var h = A2($elm$core$Basics$modBy, 7, ((((q + (((13 * (m_ + 1)) / 5) | 0)) + k) + ((k / 4) | 0)) + ((j / 4) | 0)) - (2 * j));
+			var dayOfWeek = A2($elm$core$Basics$modBy, 7, h + 5);
+			switch (dayOfWeek) {
+				case 0:
+					return '月';
+				case 1:
+					return '火';
+				case 2:
+					return '水';
+				case 3:
+					return '木';
+				case 4:
+					return '金';
+				case 5:
+					return '土';
+				case 6:
+					return '日';
+				default:
+					return '';
+			}
+		} else {
+			return '';
+		}
+	} else {
+		return '';
+	}
+};
+var $author$project$Main$formatDateWithWeekday = function (dateStr) {
+	var weekday = $author$project$Main$getWeekdayFromDate(dateStr);
+	var formatted = $author$project$Main$formatDate(dateStr);
+	return formatted + (' (' + (weekday + ')'));
+};
+var $author$project$Main$viewShiftRow = function (shift) {
+	return A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				$elm$html$Html$Attributes$class('px-4 py-3')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$class('flex justify-between items-center')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class('space-y-1')
+							]),
+						_List_fromArray(
+							[
+								A2(
+								$elm$html$Html$div,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('font-medium text-gray-900')
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text(
+										$author$project$Main$formatDateWithWeekday(shift.date))
+									])),
+								function () {
+								var _v0 = _Utils_Tuple2(shift.startTime, shift.endTime);
+								if ((_v0.a.$ === 'Just') && (_v0.b.$ === 'Just')) {
+									var start = _v0.a.a;
+									var end = _v0.b.a;
+									return A2(
+										$elm$html$Html$div,
+										_List_fromArray(
+											[
+												$elm$html$Html$Attributes$class('text-sm text-gray-600')
+											]),
+										_List_fromArray(
+											[
+												$elm$html$Html$text(start + (' 〜 ' + end))
+											]));
+								} else {
+									return $elm$html$Html$text('');
+								}
+							}()
+							])),
+						A2(
+						$elm$html$Html$span,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class(
+								shift.isAvailable ? 'px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium' : 'px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium')
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text(
+								shift.isAvailable ? '✓ 出勤可' : '✕ 出勤不可')
+							]))
+					]))
+			]));
+};
+var $author$project$Main$viewShiftsCompact = function (shifts) {
+	return $elm$core$List$isEmpty(shifts) ? A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				$elm$html$Html$Attributes$class('bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-3 text-center')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$p,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$class('text-yellow-700 text-sm')
+					]),
+				_List_fromArray(
+					[
+						$elm$html$Html$text('まだシフト希望が提出されていません')
+					]))
+			])) : A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				$elm$html$Html$Attributes$class('bg-white border border-gray-200 rounded-lg divide-y divide-gray-200')
+			]),
+		A2($elm$core$List$map, $author$project$Main$viewShiftRow, shifts));
+};
+var $author$project$Main$viewHome = function (data) {
+	return A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				$elm$html$Html$Attributes$class('w-full max-w-2xl')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$class('bg-white shadow-lg rounded-lg p-6 space-y-6')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class('text-center space-y-4')
+							]),
+						_List_fromArray(
+							[
+								A2(
+								$elm$html$Html$h1,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('text-2xl font-bold text-gray-800')
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text('シフト管理システム')
+									])),
+								A2(
+								$elm$html$Html$div,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('bg-gray-50 rounded-lg p-4 space-y-2')
+									]),
+								_List_fromArray(
+									[
+										A2(
+										$elm$html$Html$div,
+										_List_fromArray(
+											[
+												$elm$html$Html$Attributes$class('text-sm text-gray-600')
+											]),
+										_List_fromArray(
+											[
+												$elm$html$Html$text('ユーザ名:')
+											])),
+										A2(
+										$elm$html$Html$div,
+										_List_fromArray(
+											[
+												$elm$html$Html$Attributes$class('font-semibold text-lg text-gray-900')
+											]),
+										_List_fromArray(
+											[
+												$elm$html$Html$text(
+												A2($elm$core$Maybe$withDefault, '未登録', data.user.name))
+											]))
+									]))
+							])),
+						A2(
+						$elm$html$Html$button,
+						_List_fromArray(
+							[
+								$elm$html$Html$Events$onClick($author$project$Main$TogglePage),
+								$elm$html$Html$Attributes$class('w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition font-semibold')
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('📅 来週のシフト希望を入力・確認')
+							])),
+						A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class('space-y-3')
+							]),
+						_List_fromArray(
+							[
+								A2(
+								$elm$html$Html$div,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('flex items-center justify-between')
+									]),
+								_List_fromArray(
+									[
+										A2(
+										$elm$html$Html$h2,
+										_List_fromArray(
+											[
+												$elm$html$Html$Attributes$class('text-lg font-bold text-gray-800')
+											]),
+										_List_fromArray(
+											[
+												$elm$html$Html$text('来週のシフト希望状況')
+											])),
+										$author$project$Main$viewShiftStatusBadge(data.nextWeekShifts)
+									])),
+								$author$project$Main$viewShiftsCompact(data.nextWeekShifts)
+							]))
+					]))
+			]));
+};
+var $author$project$Main$ChangeUsernameInput = function (a) {
+	return {$: 'ChangeUsernameInput', a: a};
+};
+var $author$project$Main$SubmitUsername = {$: 'SubmitUsername'};
+var $elm$html$Html$Attributes$boolProperty = F2(
+	function (key, bool) {
+		return A2(
+			_VirtualDom_property,
+			key,
+			$elm$json$Json$Encode$bool(bool));
+	});
+var $elm$html$Html$Attributes$disabled = $elm$html$Html$Attributes$boolProperty('disabled');
+var $elm$html$Html$form = _VirtualDom_node('form');
+var $elm$html$Html$input = _VirtualDom_node('input');
+var $elm$html$Html$label = _VirtualDom_node('label');
 var $elm$html$Html$Events$alwaysStop = function (x) {
 	return _Utils_Tuple2(x, true);
 };
@@ -5753,93 +6412,108 @@ var $elm$html$Html$Events$onSubmit = function (msg) {
 			$elm$json$Json$Decode$succeed(msg)));
 };
 var $elm$html$Html$Attributes$placeholder = $elm$html$Html$Attributes$stringProperty('placeholder');
-var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
-var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
 var $elm$html$Html$Attributes$type_ = $elm$html$Html$Attributes$stringProperty('type');
 var $elm$html$Html$Attributes$value = $elm$html$Html$Attributes$stringProperty('value');
-var $elm$html$Html$h3 = _VirtualDom_node('h3');
-var $elm$html$Html$p = _VirtualDom_node('p');
-var $author$project$Main$formatDate = function (dateStr) {
-	var _v0 = A2($elm$core$String$split, '-', dateStr);
-	if (((_v0.b && _v0.b.b) && _v0.b.b.b) && (!_v0.b.b.b.b)) {
-		var _v1 = _v0.b;
-		var month = _v1.a;
-		var _v2 = _v1.b;
-		var day = _v2.a;
-		return month + ('/' + day);
-	} else {
-		return dateStr;
-	}
-};
-var $elm$html$Html$span = _VirtualDom_node('span');
-var $author$project$Main$viewShift = function (shift) {
+var $author$project$Main$viewRegister = function (usernameInput) {
 	return A2(
 		$elm$html$Html$div,
 		_List_fromArray(
 			[
-				$elm$html$Html$Attributes$class('px-4 py-3 space-y-1')
+				$elm$html$Html$Attributes$class('w-full max-w-md')
 			]),
 		_List_fromArray(
 			[
 				A2(
-				$elm$html$Html$div,
+				$elm$html$Html$form,
 				_List_fromArray(
 					[
-						$elm$html$Html$Attributes$class('flex justify-between items-center')
+						$elm$html$Html$Attributes$class('bg-white shadow-lg rounded-lg p-8 space-y-6'),
+						$elm$html$Html$Events$onSubmit($author$project$Main$SubmitUsername)
 					]),
 				_List_fromArray(
 					[
 						A2(
-						$elm$html$Html$span,
-						_List_fromArray(
-							[
-								$elm$html$Html$Attributes$class('font-medium text-gray-900')
-							]),
-						_List_fromArray(
-							[
-								$elm$html$Html$text(
-								$author$project$Main$formatDate(shift.date))
-							])),
-						A2(
-						$elm$html$Html$span,
-						_List_fromArray(
-							[
-								$elm$html$Html$Attributes$class(
-								shift.isAvailable ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold')
-							]),
-						_List_fromArray(
-							[
-								$elm$html$Html$text(
-								shift.isAvailable ? '出勤可' : '出勤不可')
-							]))
-					])),
-				function () {
-				var _v0 = _Utils_Tuple2(shift.startTime, shift.endTime);
-				if ((_v0.a.$ === 'Just') && (_v0.b.$ === 'Just')) {
-					var start = _v0.a.a;
-					var end = _v0.b.a;
-					return A2(
 						$elm$html$Html$div,
 						_List_fromArray(
 							[
-								$elm$html$Html$Attributes$class('text-sm text-gray-600')
+								$elm$html$Html$Attributes$class('text-center space-y-2')
 							]),
 						_List_fromArray(
 							[
-								$elm$html$Html$text(start + (' 〜 ' + end))
-							]));
-				} else {
-					return $elm$html$Html$text('');
-				}
-			}()
+								A2(
+								$elm$html$Html$h1,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('text-2xl font-bold text-gray-800')
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text('ユーザ名登録')
+									])),
+								A2(
+								$elm$html$Html$p,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('text-sm text-gray-600')
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text('システムで使用する名前を登録してください')
+									]))
+							])),
+						A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class('space-y-2')
+							]),
+						_List_fromArray(
+							[
+								A2(
+								$elm$html$Html$label,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('block text-sm font-medium text-gray-700')
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text('ユーザ名（源氏名）')
+									])),
+								A2(
+								$elm$html$Html$input,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$type_('text'),
+										$elm$html$Html$Attributes$placeholder('例: さくら'),
+										$elm$html$Html$Attributes$value(usernameInput),
+										$elm$html$Html$Events$onInput($author$project$Main$ChangeUsernameInput),
+										$elm$html$Html$Attributes$class('w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent')
+									]),
+								_List_Nil)
+							])),
+						A2(
+						$elm$html$Html$button,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$type_('submit'),
+								$elm$html$Html$Attributes$class('w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed'),
+								$elm$html$Html$Attributes$disabled(
+								$elm$core$String$trim(usernameInput) === '')
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('登録する')
+							]))
+					]))
 			]));
 };
+var $elm$html$Html$h3 = _VirtualDom_node('h3');
 var $author$project$Main$viewConfirmedShift = function (shifts) {
 	return A2(
 		$elm$html$Html$div,
 		_List_fromArray(
 			[
-				$elm$html$Html$Attributes$class('space-y-4')
+				$elm$html$Html$Attributes$class('space-y-6')
 			]),
 		_List_fromArray(
 			[
@@ -5847,7 +6521,7 @@ var $author$project$Main$viewConfirmedShift = function (shifts) {
 				$elm$html$Html$div,
 				_List_fromArray(
 					[
-						$elm$html$Html$Attributes$class('bg-green-50 border border-green-200 rounded-lg px-4 py-3 mb-6')
+						$elm$html$Html$Attributes$class('bg-green-50 border border-green-200 rounded-lg px-4 py-3')
 					]),
 				_List_fromArray(
 					[
@@ -5859,7 +6533,7 @@ var $author$project$Main$viewConfirmedShift = function (shifts) {
 							]),
 						_List_fromArray(
 							[
-								$elm$html$Html$text('来週のシフトが確定しました！')
+								$elm$html$Html$text('✓ 来週のシフトが確定しました！')
 							]))
 					])),
 				A2(
@@ -5884,13 +6558,13 @@ var $author$project$Main$viewConfirmedShift = function (shifts) {
 						$elm$html$Html$div,
 						_List_fromArray(
 							[
-								$elm$html$Html$Attributes$class('px-4 py-3 text-gray-500')
+								$elm$html$Html$Attributes$class('px-4 py-3 text-gray-500 text-center')
 							]),
 						_List_fromArray(
 							[
 								$elm$html$Html$text('出勤なし')
 							]))
-					]) : A2($elm$core$List$map, $author$project$Main$viewShift, shifts))
+					]) : A2($elm$core$List$map, $author$project$Main$viewShiftRow, shifts))
 			]));
 };
 var $author$project$Main$viewPendingShift = function (shifts) {
@@ -5898,7 +6572,7 @@ var $author$project$Main$viewPendingShift = function (shifts) {
 		$elm$html$Html$div,
 		_List_fromArray(
 			[
-				$elm$html$Html$Attributes$class('space-y-4')
+				$elm$html$Html$Attributes$class('space-y-6')
 			]),
 		_List_fromArray(
 			[
@@ -5906,7 +6580,7 @@ var $author$project$Main$viewPendingShift = function (shifts) {
 				$elm$html$Html$div,
 				_List_fromArray(
 					[
-						$elm$html$Html$Attributes$class('bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mb-6')
+						$elm$html$Html$Attributes$class('bg-blue-50 border border-blue-200 rounded-lg px-4 py-3')
 					]),
 				_List_fromArray(
 					[
@@ -5918,7 +6592,7 @@ var $author$project$Main$viewPendingShift = function (shifts) {
 							]),
 						_List_fromArray(
 							[
-								$elm$html$Html$text('管理者によるシフト確定をお待ちください。')
+								$elm$html$Html$text('⏳ 管理者によるシフト確定をお待ちください')
 							]))
 					])),
 				A2(
@@ -5943,48 +6617,36 @@ var $author$project$Main$viewPendingShift = function (shifts) {
 						$elm$html$Html$div,
 						_List_fromArray(
 							[
-								$elm$html$Html$Attributes$class('px-4 py-3 text-gray-500')
+								$elm$html$Html$Attributes$class('px-4 py-3 text-gray-500 text-center')
 							]),
 						_List_fromArray(
 							[
 								$elm$html$Html$text('シフト希望なし')
 							]))
-					]) : A2($elm$core$List$map, $author$project$Main$viewShift, shifts))
+					]) : A2($elm$core$List$map, $author$project$Main$viewShiftRow, shifts))
 			]));
 };
-var $author$project$Main$viewShifts = function (shifts) {
-	return $elm$core$List$isEmpty(shifts) ? A2(
-		$elm$html$Html$div,
-		_List_fromArray(
-			[
-				$elm$html$Html$Attributes$class('bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-3')
-			]),
-		_List_fromArray(
-			[
-				A2(
-				$elm$html$Html$p,
-				_List_fromArray(
-					[
-						$elm$html$Html$Attributes$class('text-yellow-800 font-medium')
-					]),
-				_List_fromArray(
-					[
-						$elm$html$Html$text('未提出')
-					]))
-			])) : A2(
-		$elm$html$Html$div,
-		_List_fromArray(
-			[
-				$elm$html$Html$Attributes$class('bg-white shadow rounded-lg divide-y divide-gray-200')
-			]),
-		A2($elm$core$List$map, $author$project$Main$viewShift, shifts));
-};
-var $author$project$Main$viewSubmittedShift = function (shifts) {
+var $author$project$Main$SubmitShifts = {$: 'SubmitShifts'};
+var $author$project$Main$UpdateShiftAvailability = F2(
+	function (a, b) {
+		return {$: 'UpdateShiftAvailability', a: a, b: b};
+	});
+var $author$project$Main$UpdateShiftEndTime = F2(
+	function (a, b) {
+		return {$: 'UpdateShiftEndTime', a: a, b: b};
+	});
+var $author$project$Main$UpdateShiftStartTime = F2(
+	function (a, b) {
+		return {$: 'UpdateShiftStartTime', a: a, b: b};
+	});
+var $elm$html$Html$Attributes$checked = $elm$html$Html$Attributes$boolProperty('checked');
+var $elm$html$Html$Attributes$name = $elm$html$Html$Attributes$stringProperty('name');
+var $author$project$Main$viewShiftInputRow = function (shiftinput) {
 	return A2(
 		$elm$html$Html$div,
 		_List_fromArray(
 			[
-				$elm$html$Html$Attributes$class('space-y-4')
+				$elm$html$Html$Attributes$class('bg-gray-50 rounded-lg p-4 space-y-3')
 			]),
 		_List_fromArray(
 			[
@@ -5992,58 +6654,7 @@ var $author$project$Main$viewSubmittedShift = function (shifts) {
 				$elm$html$Html$div,
 				_List_fromArray(
 					[
-						$elm$html$Html$Attributes$class('bg-green-50 border border-green-200 rounded-lg px-4 py-3 mb-6')
-					]),
-				_List_fromArray(
-					[
-						A2(
-						$elm$html$Html$p,
-						_List_fromArray(
-							[
-								$elm$html$Html$Attributes$class('text-green-800')
-							]),
-						_List_fromArray(
-							[
-								$elm$html$Html$text('シフト希望は提出済みです。')
-							]))
-					])),
-				A2(
-				$elm$html$Html$div,
-				_List_fromArray(
-					[
-						$elm$html$Html$Attributes$class('bg-white border border-gray-200 rounded-lg divide-y divide-gray-200')
-					]),
-				A2($elm$core$List$map, $author$project$Main$viewShift, shifts)),
-				A2(
-				$elm$html$Html$button,
-				_List_fromArray(
-					[
-						$elm$html$Html$Attributes$class('w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-3 rounded-lg transition mt-6')
-					]),
-				_List_fromArray(
-					[
-						$elm$html$Html$text('シフトを修正する')
-					]))
-			]));
-};
-var $author$project$Main$generateWeekDates = function (_v0) {
-	return _List_fromArray(
-		['2024-01-15', '2024-01-16', '2024-01-17', '2024-01-18', '2024-01-19', '2024-01-20', '2024-01-21']);
-};
-var $author$project$Main$viewShiftInput = function (date) {
-	return A2(
-		$elm$html$Html$div,
-		_List_fromArray(
-			[
-				$elm$html$Html$Attributes$class('bg-gray-50 rounded-lg p-4')
-			]),
-		_List_fromArray(
-			[
-				A2(
-				$elm$html$Html$div,
-				_List_fromArray(
-					[
-						$elm$html$Html$Attributes$class('flex items-center justify-between mb-3')
+						$elm$html$Html$Attributes$class('flex items-center justify-between')
 					]),
 				_List_fromArray(
 					[
@@ -6051,18 +6662,18 @@ var $author$project$Main$viewShiftInput = function (date) {
 						$elm$html$Html$label,
 						_List_fromArray(
 							[
-								$elm$html$Html$Attributes$class('font-medium text-gray-900')
+								$elm$html$Html$Attributes$class('font-semibold text-gray-900')
 							]),
 						_List_fromArray(
 							[
 								$elm$html$Html$text(
-								$author$project$Main$formatDate(date))
+								$author$project$Main$formatDateWithWeekday(shiftinput.date))
 							])),
 						A2(
 						$elm$html$Html$div,
 						_List_fromArray(
 							[
-								$elm$html$Html$Attributes$class('flex gap-3')
+								$elm$html$Html$Attributes$class('flex gap-4')
 							]),
 						_List_fromArray(
 							[
@@ -6070,7 +6681,7 @@ var $author$project$Main$viewShiftInput = function (date) {
 								$elm$html$Html$label,
 								_List_fromArray(
 									[
-										$elm$html$Html$Attributes$class('flex items-center')
+										$elm$html$Html$Attributes$class('flex items-center cursor-pointer')
 									]),
 								_List_fromArray(
 									[
@@ -6079,16 +6690,29 @@ var $author$project$Main$viewShiftInput = function (date) {
 										_List_fromArray(
 											[
 												$elm$html$Html$Attributes$type_('radio'),
-												$elm$html$Html$Attributes$class('mr-2')
+												$elm$html$Html$Attributes$name('availability-' + shiftinput.date),
+												$elm$html$Html$Attributes$checked(shiftinput.isAvailable),
+												$elm$html$Html$Events$onClick(
+												A2($author$project$Main$UpdateShiftAvailability, shiftinput.date, true)),
+												$elm$html$Html$Attributes$class('mr-2 w-4 h-4 text-blue-600')
 											]),
 										_List_Nil),
-										$elm$html$Html$text('出勤可')
+										A2(
+										$elm$html$Html$span,
+										_List_fromArray(
+											[
+												$elm$html$Html$Attributes$class('text-sm font-medium text-gray-700')
+											]),
+										_List_fromArray(
+											[
+												$elm$html$Html$text('出勤可')
+											]))
 									])),
 								A2(
 								$elm$html$Html$label,
 								_List_fromArray(
 									[
-										$elm$html$Html$Attributes$class('flex items-center')
+										$elm$html$Html$Attributes$class('flex items-center cursor-pointer')
 									]),
 								_List_fromArray(
 									[
@@ -6097,18 +6721,31 @@ var $author$project$Main$viewShiftInput = function (date) {
 										_List_fromArray(
 											[
 												$elm$html$Html$Attributes$type_('radio'),
-												$elm$html$Html$Attributes$class('mr-2')
+												$elm$html$Html$Attributes$name('availability-' + shiftinput.date),
+												$elm$html$Html$Attributes$checked(!shiftinput.isAvailable),
+												$elm$html$Html$Events$onClick(
+												A2($author$project$Main$UpdateShiftAvailability, shiftinput.date, false)),
+												$elm$html$Html$Attributes$class('mr-2 w-4 h-4 text-blue-600')
 											]),
 										_List_Nil),
-										$elm$html$Html$text('出勤不可')
+										A2(
+										$elm$html$Html$span,
+										_List_fromArray(
+											[
+												$elm$html$Html$Attributes$class('text-sm font-medium text-gray-700')
+											]),
+										_List_fromArray(
+											[
+												$elm$html$Html$text('出勤不可')
+											]))
 									]))
 							]))
 					])),
-				A2(
+				shiftinput.isAvailable ? A2(
 				$elm$html$Html$div,
 				_List_fromArray(
 					[
-						$elm$html$Html$Attributes$class('flex gap-2 items-center text-sm')
+						$elm$html$Html$Attributes$class('flex gap-3 items-center')
 					]),
 				_List_fromArray(
 					[
@@ -6117,15 +6754,17 @@ var $author$project$Main$viewShiftInput = function (date) {
 						_List_fromArray(
 							[
 								$elm$html$Html$Attributes$type_('time'),
-								$elm$html$Html$Attributes$placeholder('開始時間'),
-								$elm$html$Html$Attributes$class('px-3 py-1 border border-gray-300 rounded')
+								$elm$html$Html$Attributes$value(shiftinput.startTime),
+								$elm$html$Html$Events$onInput(
+								$author$project$Main$UpdateShiftStartTime(shiftinput.date)),
+								$elm$html$Html$Attributes$class('px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500')
 							]),
 						_List_Nil),
 						A2(
 						$elm$html$Html$span,
 						_List_fromArray(
 							[
-								$elm$html$Html$Attributes$class('text-gray-500')
+								$elm$html$Html$Attributes$class('text-gray-500 font-medium')
 							]),
 						_List_fromArray(
 							[
@@ -6136,76 +6775,204 @@ var $author$project$Main$viewShiftInput = function (date) {
 						_List_fromArray(
 							[
 								$elm$html$Html$Attributes$type_('time'),
-								$elm$html$Html$Attributes$placeholder('終了時間'),
-								$elm$html$Html$Attributes$class('px-3 py-1 border border-gray-300 rounded')
+								$elm$html$Html$Attributes$value(shiftinput.endTime),
+								$elm$html$Html$Events$onInput(
+								$author$project$Main$UpdateShiftEndTime(shiftinput.date)),
+								$elm$html$Html$Attributes$class('px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500')
 							]),
 						_List_Nil)
-					]))
+					])) : $elm$html$Html$text('')
 			]));
 };
-var $author$project$Main$viewUnsubmittedShift = A2(
-	$elm$html$Html$div,
-	_List_fromArray(
-		[
-			$elm$html$Html$Attributes$class('space-y-4')
-		]),
-	_List_fromArray(
-		[
-			A2(
+var $author$project$Main$viewSubmittedShift = F3(
+	function (_v0, shiftInputs, isSubmitting) {
+		return A2(
 			$elm$html$Html$div,
 			_List_fromArray(
 				[
-					$elm$html$Html$Attributes$class('bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-3 mb-6')
+					$elm$html$Html$Attributes$class('space-y-6')
 				]),
 			_List_fromArray(
 				[
 					A2(
-					$elm$html$Html$p,
+					$elm$html$Html$div,
 					_List_fromArray(
 						[
-							$elm$html$Html$Attributes$class('text-yellow-800')
+							$elm$html$Html$Attributes$class('bg-green-50 border border-green-200 rounded-lg px-4 py-3')
 						]),
 					_List_fromArray(
 						[
-							$elm$html$Html$text('シフト希望が未提出です。下記から入力してください。')
+							A2(
+							$elm$html$Html$p,
+							_List_fromArray(
+								[
+									$elm$html$Html$Attributes$class('text-green-800 text-sm font-medium')
+								]),
+							_List_fromArray(
+								[
+									$elm$html$Html$text('✓ シフト希望は提出済みです（修正可能）')
+								]))
+						])),
+					A2(
+					$elm$html$Html$div,
+					_List_fromArray(
+						[
+							$elm$html$Html$Attributes$class('space-y-3')
+						]),
+					A2($elm$core$List$map, $author$project$Main$viewShiftInputRow, shiftInputs)),
+					A2(
+					$elm$html$Html$button,
+					_List_fromArray(
+						[
+							$elm$html$Html$Events$onClick($author$project$Main$SubmitShifts),
+							$elm$html$Html$Attributes$disabled(isSubmitting),
+							$elm$html$Html$Attributes$class('w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed')
+						]),
+					_List_fromArray(
+						[
+							$elm$html$Html$text(
+							isSubmitting ? '更新中...' : 'シフトを更新する')
 						]))
-				])),
-			A2(
+				]));
+	});
+var $author$project$Main$viewUnsubmittedShift = F2(
+	function (shiftInputs, isSubmitting) {
+		return A2(
 			$elm$html$Html$div,
 			_List_fromArray(
 				[
-					$elm$html$Html$Attributes$class('space-y-3')
-				]),
-			A2(
-				$elm$core$List$map,
-				$author$project$Main$viewShiftInput,
-				$author$project$Main$generateWeekDates(_Utils_Tuple0))),
-			A2(
-			$elm$html$Html$button,
-			_List_fromArray(
-				[
-					$elm$html$Html$Attributes$class('w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg transition mt-6')
+					$elm$html$Html$Attributes$class('space-y-6')
 				]),
 			_List_fromArray(
 				[
-					$elm$html$Html$text('シフトを提出する')
-				]))
-		]));
-var $elm$core$Maybe$withDefault = F2(
-	function (_default, maybe) {
-		if (maybe.$ === 'Just') {
-			var value = maybe.a;
-			return value;
-		} else {
-			return _default;
-		}
+					A2(
+					$elm$html$Html$div,
+					_List_fromArray(
+						[
+							$elm$html$Html$Attributes$class('bg-blue-50 border border-blue-200 rounded-lg px-4 py-3')
+						]),
+					_List_fromArray(
+						[
+							A2(
+							$elm$html$Html$p,
+							_List_fromArray(
+								[
+									$elm$html$Html$Attributes$class('text-blue-800 text-sm')
+								]),
+							_List_fromArray(
+								[
+									$elm$html$Html$text('📝 来週のシフト希望を入力してください')
+								]))
+						])),
+					A2(
+					$elm$html$Html$div,
+					_List_fromArray(
+						[
+							$elm$html$Html$Attributes$class('space-y-3')
+						]),
+					A2($elm$core$List$map, $author$project$Main$viewShiftInputRow, shiftInputs)),
+					A2(
+					$elm$html$Html$button,
+					_List_fromArray(
+						[
+							$elm$html$Html$Events$onClick($author$project$Main$SubmitShifts),
+							$elm$html$Html$Attributes$disabled(isSubmitting),
+							$elm$html$Html$Attributes$class('w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed')
+						]),
+					_List_fromArray(
+						[
+							$elm$html$Html$text(
+							isSubmitting ? '送信中...' : 'シフトを提出する')
+						]))
+				]));
+	});
+var $author$project$Main$viewShiftPage = F4(
+	function (data, shiftState, shiftInputs, isSubmitting) {
+		return A2(
+			$elm$html$Html$div,
+			_List_fromArray(
+				[
+					$elm$html$Html$Attributes$class('w-full max-w-3xl')
+				]),
+			_List_fromArray(
+				[
+					A2(
+					$elm$html$Html$div,
+					_List_fromArray(
+						[
+							$elm$html$Html$Attributes$class('bg-white shadow-lg rounded-lg overflow-hidden')
+						]),
+					_List_fromArray(
+						[
+							A2(
+							$elm$html$Html$div,
+							_List_fromArray(
+								[
+									$elm$html$Html$Attributes$class('bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4')
+								]),
+							_List_fromArray(
+								[
+									A2(
+									$elm$html$Html$div,
+									_List_fromArray(
+										[
+											$elm$html$Html$Attributes$class('flex justify-between items-center')
+										]),
+									_List_fromArray(
+										[
+											A2(
+											$elm$html$Html$h2,
+											_List_fromArray(
+												[
+													$elm$html$Html$Attributes$class('text-2xl font-bold text-white')
+												]),
+											_List_fromArray(
+												[
+													$elm$html$Html$text('来週のシフト希望')
+												])),
+											A2(
+											$elm$html$Html$button,
+											_List_fromArray(
+												[
+													$elm$html$Html$Events$onClick($author$project$Main$TogglePage),
+													$elm$html$Html$Attributes$class('text-white hover:text-blue-100 font-medium')
+												]),
+											_List_fromArray(
+												[
+													$elm$html$Html$text('← ホームに戻る')
+												]))
+										]))
+								])),
+							A2(
+							$elm$html$Html$div,
+							_List_fromArray(
+								[
+									$elm$html$Html$Attributes$class('p-6')
+								]),
+							_List_fromArray(
+								[
+									function () {
+									switch (shiftState.$) {
+										case 'Unsubmitted':
+											return A2($author$project$Main$viewUnsubmittedShift, shiftInputs, isSubmitting);
+										case 'Submitted':
+											return A3($author$project$Main$viewSubmittedShift, data.nextWeekShifts, shiftInputs, isSubmitting);
+										case 'Pending':
+											return $author$project$Main$viewPendingShift(data.nextWeekShifts);
+										default:
+											return $author$project$Main$viewConfirmedShift(data.nextWeekShifts);
+									}
+								}()
+								]))
+						]))
+				]));
 	});
 var $author$project$Main$view = function (model) {
 	return A2(
 		$elm$html$Html$div,
 		_List_fromArray(
 			[
-				$elm$html$Html$Attributes$class('min-h-screen flex items-center justify-center p-6')
+				$elm$html$Html$Attributes$class('min-h-screen bg-gray-50 flex items-center justify-center p-4')
 			]),
 		_List_fromArray(
 			[
@@ -6228,222 +6995,13 @@ var $author$project$Main$view = function (model) {
 					var page = _v0.b;
 					switch (page.$) {
 						case 'Home':
-							return A2(
-								$elm$html$Html$div,
-								_List_fromArray(
-									[
-										$elm$html$Html$Attributes$class('text-center space-y-6 max-w-2xl mx-auto')
-									]),
-								_List_fromArray(
-									[
-										A2(
-										$elm$html$Html$div,
-										_List_fromArray(
-											[
-												$elm$html$Html$Attributes$class('space-y-4')
-											]),
-										_List_fromArray(
-											[
-												A2(
-												$elm$html$Html$div,
-												_List_fromArray(
-													[
-														$elm$html$Html$Attributes$class('text-sm text-gray-500')
-													]),
-												_List_fromArray(
-													[
-														$elm$html$Html$text('LINE UserID:')
-													])),
-												A2(
-												$elm$html$Html$code,
-												_List_fromArray(
-													[
-														$elm$html$Html$Attributes$class('font-mono text-lg bg-white shadow rounded px-4 py-3 text-gray-900 block')
-													]),
-												_List_fromArray(
-													[
-														$elm$html$Html$text(data.user.lineUserId)
-													])),
-												A2(
-												$elm$html$Html$div,
-												_List_fromArray(
-													[
-														$elm$html$Html$Attributes$class('text-sm text-gray-500')
-													]),
-												_List_fromArray(
-													[
-														$elm$html$Html$text('ユーザ名:')
-													])),
-												A2(
-												$elm$html$Html$code,
-												_List_fromArray(
-													[
-														$elm$html$Html$Attributes$class('font-mono text-lg bg-white shadow rounded px-4 py-3 text-gray-900 block')
-													]),
-												_List_fromArray(
-													[
-														$elm$html$Html$text(
-														A2($elm$core$Maybe$withDefault, '未登録', data.user.name))
-													]))
-											])),
-										A2(
-										$elm$html$Html$button,
-										_List_fromArray(
-											[
-												$elm$html$Html$Events$onClick($author$project$Main$TogglePage),
-												$elm$html$Html$Attributes$class('bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition')
-											]),
-										_List_fromArray(
-											[
-												$elm$html$Html$text('来週のシフト希望を入力')
-											])),
-										A2(
-										$elm$html$Html$div,
-										_List_fromArray(
-											[
-												$elm$html$Html$Attributes$class('mt-8 space-y-4')
-											]),
-										_List_fromArray(
-											[
-												A2(
-												$elm$html$Html$h2,
-												_List_fromArray(
-													[
-														$elm$html$Html$Attributes$class('text-xl font-bold text-gray-800')
-													]),
-												_List_fromArray(
-													[
-														$elm$html$Html$text('来週のシフト希望')
-													])),
-												$author$project$Main$viewShifts(data.nextWeekShifts)
-											]))
-									]));
+							return $author$project$Main$viewHome(data);
 						case 'Register':
 							var usernameInput = page.a;
-							return A2(
-								$elm$html$Html$div,
-								_List_fromArray(
-									[
-										$elm$html$Html$Attributes$class('w-full max-w-md mx-auto')
-									]),
-								_List_fromArray(
-									[
-										A2(
-										$elm$html$Html$form,
-										_List_fromArray(
-											[
-												$elm$html$Html$Attributes$class('bg-white shadow rounded-lg p-6 space-y-4'),
-												$elm$html$Html$Events$onSubmit($author$project$Main$SubmitUsername)
-											]),
-										_List_fromArray(
-											[
-												A2(
-												$elm$html$Html$div,
-												_List_fromArray(
-													[
-														$elm$html$Html$Attributes$class('space-y-2')
-													]),
-												_List_fromArray(
-													[
-														A2(
-														$elm$html$Html$label,
-														_List_fromArray(
-															[
-																$elm$html$Html$Attributes$class('block text-sm font-medium text-gray-700')
-															]),
-														_List_fromArray(
-															[
-																$elm$html$Html$text('ユーザ名')
-															])),
-														A2(
-														$elm$html$Html$input,
-														_List_fromArray(
-															[
-																$elm$html$Html$Attributes$type_('text'),
-																$elm$html$Html$Attributes$placeholder('源氏名を入力'),
-																$elm$html$Html$Attributes$value(usernameInput),
-																$elm$html$Html$Events$onInput($author$project$Main$ChangeUsernameInput),
-																$elm$html$Html$Attributes$class('w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500')
-															]),
-														_List_Nil)
-													])),
-												A2(
-												$elm$html$Html$button,
-												_List_fromArray(
-													[
-														$elm$html$Html$Attributes$type_('submit'),
-														$elm$html$Html$Attributes$class('w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition disabled:opacity-50 disabled:cursor-not-allowed'),
-														$elm$html$Html$Attributes$disabled(
-														$elm$core$String$trim(usernameInput) === '')
-													]),
-												_List_fromArray(
-													[
-														$elm$html$Html$text('登録する')
-													]))
-											]))
-									]));
+							return $author$project$Main$viewRegister(usernameInput);
 						default:
 							var shiftState = page.a;
-							return A2(
-								$elm$html$Html$div,
-								_List_fromArray(
-									[
-										$elm$html$Html$Attributes$class('w-full max-w-2xl mx-auto')
-									]),
-								_List_fromArray(
-									[
-										A2(
-										$elm$html$Html$div,
-										_List_fromArray(
-											[
-												$elm$html$Html$Attributes$class('bg-white shadow rounded-lg p-6')
-											]),
-										_List_fromArray(
-											[
-												A2(
-												$elm$html$Html$div,
-												_List_fromArray(
-													[
-														$elm$html$Html$Attributes$class('flex justify-between items-center mb-6')
-													]),
-												_List_fromArray(
-													[
-														A2(
-														$elm$html$Html$h2,
-														_List_fromArray(
-															[
-																$elm$html$Html$Attributes$class('text-2xl font-bold text-gray-800')
-															]),
-														_List_fromArray(
-															[
-																$elm$html$Html$text('来週のシフト希望')
-															])),
-														A2(
-														$elm$html$Html$button,
-														_List_fromArray(
-															[
-																$elm$html$Html$Events$onClick($author$project$Main$TogglePage),
-																$elm$html$Html$Attributes$class('text-blue-600 hover:text-blue-800')
-															]),
-														_List_fromArray(
-															[
-																$elm$html$Html$text('ホームに戻る')
-															]))
-													])),
-												function () {
-												switch (shiftState.$) {
-													case 'Unsubmitted':
-														return $author$project$Main$viewUnsubmittedShift;
-													case 'Submitted':
-														return $author$project$Main$viewSubmittedShift(data.nextWeekShifts);
-													case 'Pending':
-														return $author$project$Main$viewPendingShift(data.nextWeekShifts);
-													default:
-														return $author$project$Main$viewConfirmedShift(data.nextWeekShifts);
-												}
-											}()
-											]))
-									]));
+							return A4($author$project$Main$viewShiftPage, data, shiftState, model.shiftInputs, model.isSubmitting);
 					}
 				}
 			}()
