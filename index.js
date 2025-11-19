@@ -141,6 +141,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     liff
       .init({ 
         liffId,
+        withLoginOnExternalBrowser: true,
       })
       .then(async () => {
         if (!liff.isLoggedIn()) {
@@ -171,6 +172,26 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
           if (!response.ok) {
             const errorMessage = result.error || result.message || 'Token verification failed';
+
+            // ★期限切れだけは「再ログインフロー」に分岐
+            if (!liff.isInClient() && errorMessage === 'id_token_expired') {
+              // 無限ループ防止のため、一度だけリトライするようにする
+              const url = new URL(location.href);
+              const retried = url.searchParams.get('relogin') === '1';
+
+              if (!retried) {
+                // まだリトライしていない → 一度だけクリーンにして再ログイン
+                await liff.logout();
+                url.searchParams.set('relogin', '1');
+                location.href = url.toString();
+                return;
+              } else {
+                // すでに relogin=1 で戻ってきているのにまた期限切れなら、
+                // これ以上ループさせずにエラー表示して止める
+                sendError('ログイン情報の有効期限が切れています。ブラウザを閉じて再度お試しください。');
+                return;
+              }
+            }
             
             const errorMessages = {
               'account_deactivated': 'アカウントが無効化されています。',
