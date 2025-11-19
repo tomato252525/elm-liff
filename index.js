@@ -203,26 +203,8 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
           if (user && token) {
             // ユーザ情報と来週のシフトデータを取得
-            const nextMondayDate = getNextMonday();
-            
-            const { data: shifts, error: shiftsError } = await db
-              .from('shift_requests')
-              .select('id, date, start_time, end_time, exit_by_end_time, is_available')
-              .eq('user_id', user.id)
-              .eq('week_start_date', nextMondayDate)
-              .order('date', { ascending: true });
-
-            if (shiftsError) {
-              sendError(`シフトデータの取得に失敗: ${shiftsError.message}`);
-              return;
-            }
-
-            // ユーザ情報と来週のシフトデータをElmに送信
-            app.ports.deliverVerificationResult.send({
-              user: user,
-              next_week_shifts: shifts || [],
-              week_start_date: nextMondayDate
-            });
+            const data = await fetchUserAndShifts(user.id);
+            app.ports.deliverVerificationResult.send(data);
           } else {
             sendError('検証に失敗しました。');
           }
