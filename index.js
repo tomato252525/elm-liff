@@ -109,18 +109,8 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
       try {
         const { user_id, week_start_date, shifts } = payload;
 
-        // トランザクション的な処理: 既存のシフトを削除してから新規挿入
-        // 1. 既存のシフトを削除
-        const { error: deleteError } = await db
-          .from('shift_requests')
-          .delete()
-          .eq('user_id', user_id)
-          .eq('week_start_date', week_start_date);
-
-        if (deleteError) throw deleteError;
-
-        // 2. 新しいシフトを挿入
-        const shiftsToInsert = shifts.map(shift => ({
+        // 新しいシフトデータを準備
+        const shiftsToUpsert = shifts.map(shift => ({
           user_id,
           date: shift.date,
           start_time: shift.start_time,
@@ -130,13 +120,17 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
           exit_by_end_time: null // 必要に応じて設定
         }));
 
-        const { error: insertError } = await db
+        // upsert を使用（存在する場合は更新、存在しない場合は挿入）
+        const { error: upsertError } = await db
           .from('shift_requests')
-          .insert(shiftsToInsert);
+          .upsert(shiftsToUpsert, {
+            onConflict: 'user_id,date',
+            ignoreDuplicates: false
+          });
 
-        if (insertError) throw insertError;
+        if (upsertError) throw upsertError;
 
-        // 3. 更新後のデータを取得して返す
+        // 更新後のデータを取得して返す
         const result = await fetchUserAndShifts(user_id);
         app.ports.shiftSubmitResponse?.send(result);
       } catch (e) {
