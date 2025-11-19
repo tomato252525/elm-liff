@@ -145,7 +145,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
       .then(async () => {
         if (!liff.isInClient()) {
           // LINE アプリ外（PCブラウザなど）の場合
-          sendError('popo');
+          liff.logout();
         }
         if (!liff.isLoggedIn()) {
           liff.login();
