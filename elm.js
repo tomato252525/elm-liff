@@ -5647,7 +5647,7 @@ var $author$project$Main$initializeShiftInputs = F2(
 						A2($elm$core$Maybe$withDefault, '', req.endTime),
 						req.exitByEndTime);
 				} else {
-					return A5($author$project$Main$ShiftInput, date, true, '', '', false);
+					return A5($author$project$Main$ShiftInput, date, false, '', '', false);
 				}
 			},
 			dates);
@@ -6879,7 +6879,7 @@ var $author$project$Main$viewShiftInputRow = function (shiftInput) {
 									]),
 								_List_fromArray(
 									[
-										$elm$html$Html$text('ラストまで（閉店作業含む）')
+										$elm$html$Html$text('上')
 									]))
 							]))
 					])) : A2(
