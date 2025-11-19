@@ -143,10 +143,6 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
         liffId,
       })
       .then(async () => {
-        if (!liff.isInClient()) {
-          // LINE アプリ外（PCブラウザなど）の場合
-          liff.logout();
-        }
         if (!liff.isLoggedIn()) {
           liff.login();
           return;
