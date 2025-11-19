@@ -5913,12 +5913,19 @@ var $author$project$Main$update = F2(
 						{
 							showMonToWed: $elm$core$Maybe$Just(isMonWed)
 						}),
-					$elm$core$Platform$Cmd$batch(
-						_List_fromArray(
-							[
-								$author$project$Main$scheduleNextJstMidnight(now),
-								$author$project$Main$refreshDataRequest(_Utils_Tuple0)
-							])));
+					function () {
+						var _v1 = model.appState;
+						if (_v1.$ === 'Loading') {
+							return $author$project$Main$scheduleNextJstMidnight(now);
+						} else {
+							return $elm$core$Platform$Cmd$batch(
+								_List_fromArray(
+									[
+										$author$project$Main$scheduleNextJstMidnight(now),
+										$author$project$Main$refreshDataRequest(_Utils_Tuple0)
+									]));
+						}
+					}());
 			case 'UserArrived':
 				var data = msg.a;
 				return _Utils_Tuple2(
@@ -5926,9 +5933,9 @@ var $author$project$Main$update = F2(
 					$elm$core$Platform$Cmd$none);
 			case 'DataRefreshed':
 				var data = msg.a;
-				var _v1 = model.appState;
-				if (_v1.$ === 'Authenticated') {
-					var currentPage = _v1.b;
+				var _v2 = model.appState;
+				if (_v2.$ === 'Authenticated') {
+					var currentPage = _v2.b;
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
@@ -5964,10 +5971,10 @@ var $author$project$Main$update = F2(
 						}),
 					$elm$core$Platform$Cmd$none);
 			case 'SubmitUsername':
-				var _v2 = model.appState;
-				if ((_v2.$ === 'Authenticated') && (_v2.b.$ === 'Register')) {
-					var data = _v2.a;
-					var usernameInput = _v2.b.a;
+				var _v3 = model.appState;
+				if ((_v3.$ === 'Authenticated') && (_v3.b.$ === 'Register')) {
+					var data = _v3.a;
+					var usernameInput = _v3.b.a;
 					var trimmed = $elm$core$String$trim(usernameInput);
 					return $elm$core$String$isEmpty(trimmed) ? _Utils_Tuple2(model, $elm$core$Platform$Cmd$none) : _Utils_Tuple2(
 						model,
@@ -5977,10 +5984,10 @@ var $author$project$Main$update = F2(
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				}
 			case 'TogglePage':
-				var _v3 = model.appState;
-				if (_v3.$ === 'Authenticated') {
-					var data = _v3.a;
-					var page = _v3.b;
+				var _v4 = model.appState;
+				if (_v4.$ === 'Authenticated') {
+					var data = _v4.a;
+					var page = _v4.b;
 					switch (page.$) {
 						case 'Home':
 							var weekDates = $author$project$Main$generateWeekDates(data.nextWeekStartDate);
@@ -6063,9 +6070,9 @@ var $author$project$Main$update = F2(
 					},
 					model);
 			case 'SubmitShifts':
-				var _v5 = model.appState;
-				if (_v5.$ === 'Authenticated') {
-					var data = _v5.a;
+				var _v6 = model.appState;
+				if (_v6.$ === 'Authenticated') {
+					var data = _v6.a;
 					var shiftsJson = A3($author$project$Main$encodeShiftInputs, data.user.id, data.nextWeekStartDate, model.shiftInputs);
 					return _Utils_Tuple2(
 						_Utils_update(
