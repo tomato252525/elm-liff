@@ -1,34 +1,43 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
 
 (function () {
+  // 設定値
   const liffId = '2008402680-ZPy9zpAq';
-  
-  // Supabaseクライアントのセットアップ
   const supabaseUrl = 'https://uxpyevttkvycivvvqycl.supabase.co'
   const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4cHlldnR0a3Z5Y2l2dnZxeWNsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMzNzYzNTQsImV4cCI6MjA3ODk1MjM1NH0.oJL3eCCwqJ1TK6ysJkllqYVrm2NhZmo-lMCdUm3_840'
 
   let db = null;
 
-  // 来週の月曜日を計算する関数（日本時間基準）
-  const getNextMonday = () => {
+  // ---------------------------------------------------------
+  // 日付計算ユーティリティ
+  // offsetWeeks: 0 = 今週の月曜, 1 = 来週の月曜
+  // ---------------------------------------------------------
+  const getMondayDate = (offsetWeeks) => {
+    // 日本時間を基準にする
     const nowJST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }));
-    const dayOfWeek = nowJST.getDay(); // 0=日曜, 1=月曜, ..., 6=土曜
-    const daysUntilNextMonday = dayOfWeek === 0 ? 1 : 8 - dayOfWeek;
+    const dayOfWeek = nowJST.getDay(); // 0=日曜, 1=月曜...
     
-    const nextMonday = new Date(nowJST);
-    nextMonday.setDate(nowJST.getDate() + daysUntilNextMonday);
+    // 今週の月曜日までの日数を計算（日曜なら6日前、それ以外は dayOfWeek - 1 日前）
+    const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
     
-    // YYYY-MM-DD形式に変換（日本時間基準）
-    const year = nextMonday.getFullYear();
-    const month = String(nextMonday.getMonth() + 1).padStart(2, '0');
-    const day = String(nextMonday.getDate()).padStart(2, '0');
+    const targetDate = new Date(nowJST);
+    targetDate.setDate(nowJST.getDate() - diffToMonday + (offsetWeeks * 7));
+
+    // YYYY-MM-DD形式に整形
+    const year = targetDate.getFullYear();
+    const month = String(targetDate.getMonth() + 1).padStart(2, '0');
+    const day = String(targetDate.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   };
 
-  // 共通のユーザ情報とシフトデータを取得する関数
+  // ---------------------------------------------------------
+  // ユーザー情報とシフトデータ（今週確定・来週希望・来週確定）を一括取得
+  // ---------------------------------------------------------
   const fetchUserAndShifts = async (userId) => {
-    const nextMondayDate = getNextMonday();
+    const currentMonday = getMondayDate(0); // 今週の月曜
+    const nextMonday = getMondayDate(1);    // 来週の月曜
     
+    // 1. ユーザー情報の取得
     const { data: user, error: userError } = await db
       .from('users')
       .select('id, name, role, line_user_id')
@@ -38,22 +47,52 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     if (userError) throw userError;
     if (!user) throw new Error('ユーザが見つかりません。');
 
-    const { data: shifts, error: shiftsError } = await db
-      .from('shift_requests')
-      .select('id, date, start_time, end_time, exit_by_end_time, is_available')
-      .eq('user_id', userId)
-      .eq('week_start_date', nextMondayDate)
-      .order('date', { ascending: true });
+    // 2. シフトデータを並列取得 (3種類)
+    const [requestsResult, currentConfirmedResult, nextConfirmedResult] = await Promise.all([
+      // A. 来週の希望シフト
+      db.from('shift_requests')
+        .select('id, date, start_time, end_time, exit_by_end_time, is_available')
+        .eq('user_id', userId)
+        .eq('week_start_date', nextMonday)
+        .order('date', { ascending: true }),
 
-    if (shiftsError) throw shiftsError;
+      // B. 今週の確定シフト
+      db.from('confirmed_shifts')
+        .select('id, date, start_time, end_time, exit_by_end_time, note')
+        .eq('cast_id', userId)
+        .eq('week_start_date', currentMonday)
+        .order('date', { ascending: true }),
+
+      // C. 来週の確定シフト (公開済みの場合のみ取得できる)
+      db.from('confirmed_shifts')
+        .select('id, date, start_time, end_time, exit_by_end_time, note')
+        .eq('cast_id', userId)
+        .eq('week_start_date', nextMonday)
+        .order('date', { ascending: true })
+    ]);
+
+    if (requestsResult.error) throw requestsResult.error;
+    if (currentConfirmedResult.error) throw currentConfirmedResult.error;
+    if (nextConfirmedResult.error) throw nextConfirmedResult.error;
 
     return {
       user,
-      next_week_shifts: shifts || [],
-      week_start_date: nextMondayDate
+      // 今週（確定）
+      current_week_start_date: currentMonday,
+      current_week_shifts: currentConfirmedResult.data || [],
+
+      // 来週（希望）
+      next_week_start_date: nextMonday,
+      next_week_shifts: requestsResult.data || [],
+      
+      // 来週（確定）
+      next_week_confirmed_shifts: nextConfirmedResult.data || []
     };
   };
 
+  // ---------------------------------------------------------
+  // メイン処理
+  // ---------------------------------------------------------
   window.addEventListener('DOMContentLoaded', () => {
     const node = document.getElementById('root');
     if (!node) {
@@ -61,8 +100,10 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
       return;
     }
 
+    // Elmアプリの初期化
     const app = Elm.Main.init({ node });
 
+    // エラー送信ヘルパー
     const sendError = (e) => {
       console.error(e);
       app.ports.deliverError?.send(
@@ -70,7 +111,9 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
       );
     };
 
-    // ユーザ名登録処理
+    // ----------------------------------
+    // Port: ユーザ名登録処理
+    // ----------------------------------
     app.ports.usernameRegistrationRequest?.subscribe(async ({ name, lineUserId }) => {
       if (!db) {
         sendError('DB client is not initialized');
@@ -91,7 +134,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
           return;
         }
 
-        // 更新されたユーザ情報とシフトデータを取得
+        // 更新後の全データを再取得してElmへ
         const result = await fetchUserAndShifts(data.id);
         app.ports.usernameRegistrationResponse?.send(result);
       } catch (e) {
@@ -99,7 +142,9 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
       }
     });
 
-    // シフト提出・更新処理
+    // ----------------------------------
+    // Port: シフト提出・更新処理
+    // ----------------------------------
     app.ports.shiftSubmitRequest?.subscribe(async (payload) => {
       if (!db) {
         sendError('DB client is not initialized');
@@ -107,20 +152,20 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
       }
 
       try {
-        const { user_id, week_start_date, shifts } = payload;
+        // Elm側から送られてくるプロパティ名に合わせて分割代入
+        // ※Elm側で next_week_start_date という名前で送る想定
+        const { user_id, next_week_start_date, shifts } = payload;
 
-        // 新しいシフトデータを準備
         const shiftsToUpsert = shifts.map(shift => ({
           user_id,
           date: shift.date,
           start_time: shift.start_time,
           end_time: shift.end_time,
           is_available: shift.is_available,
-          week_start_date,
+          week_start_date: next_week_start_date, // DBのカラム名は week_start_date
           exit_by_end_time: shift.exit_by_end_time
         }));
 
-        // upsert を使用（存在する場合は更新、存在しない場合は挿入）
         const { error: upsertError } = await db
           .from('shift_requests')
           .upsert(shiftsToUpsert, {
@@ -130,7 +175,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
         if (upsertError) throw upsertError;
 
-        // 更新後のデータを取得して返す
+        // 更新後の全データを再取得してElmへ
         const result = await fetchUserAndShifts(user_id);
         app.ports.shiftSubmitResponse?.send(result);
       } catch (e) {
@@ -138,6 +183,9 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
       }
     });
 
+    // ----------------------------------
+    // LIFF初期化 & 認証フロー
+    // ----------------------------------
     liff
       .init({ 
         liffId,
@@ -156,6 +204,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
         }
 
         try {
+          // Edge Functionで検証してカスタムトークンを取得
           const response = await fetch(
             `${supabaseUrl}/functions/v1/verify-liff-token`,
             {
@@ -173,26 +222,23 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
           if (!response.ok) {
             const errorMessage = result.error || result.message || 'Token verification failed';
 
-            // ★期限切れだけは「再ログインフロー」に分岐
+            // IDトークン期限切れ時の再ログイン処理
             if (!liff.isInClient() && errorMessage === 'id_token_expired') {
-              // 無限ループ防止のため、一度だけリトライするようにする
               const url = new URL(location.href);
               const retried = url.searchParams.get('relogin') === '1';
 
               if (!retried) {
-                // まだリトライしていない → 一度だけクリーンにして再ログイン
                 await liff.logout();
                 url.searchParams.set('relogin', '1');
                 location.href = url.toString();
                 return;
               } else {
-                // すでに relogin=1 で戻ってきているのにまた期限切れなら、
-                // これ以上ループさせずにエラー表示して止める
                 sendError('ログイン情報の有効期限が切れています。ブラウザを閉じて再度お試しください。');
                 return;
               }
             }
             
+            // エラーハンドリング
             const errorMessages = {
               'account_deactivated': 'アカウントが無効化されています。',
               'nonce_mismatch': 'セキュリティ検証に失敗しました。',
@@ -209,14 +255,14 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
           const token = result.token;
           const user = result.user;
 
-          // DB操作用クライアントを作成
+          // 認証済みクライアントを作成
           db = createClient(supabaseUrl, supabaseAnonKey, {
             auth: { persistSession: false },
             global: { headers: { Authorization: `Bearer ${token}` } },
           });
 
           if (user && token) {
-            // ユーザ情報と来週のシフトデータを取得
+            // 初期データを取得してElmへ送信
             const data = await fetchUserAndShifts(user.id);
             app.ports.deliverVerificationResult.send(data);
           } else {

@@ -5285,18 +5285,16 @@ var $author$project$Main$ShiftSubmitted = function (a) {
 var $author$project$Main$UserArrived = function (a) {
 	return {$: 'UserArrived', a: a};
 };
-var $author$project$Main$Data = F3(
-	function (user, nextWeekShifts, weekStartDate) {
-		return {nextWeekShifts: nextWeekShifts, user: user, weekStartDate: weekStartDate};
+var $author$project$Main$Data = F6(
+	function (user, currentWeekStartDate, currentWeekShifts, nextWeekStartDate, nextWeekShifts, nextWeekConfirmedShifts) {
+		return {currentWeekShifts: currentWeekShifts, currentWeekStartDate: currentWeekStartDate, nextWeekConfirmedShifts: nextWeekConfirmedShifts, nextWeekShifts: nextWeekShifts, nextWeekStartDate: nextWeekStartDate, user: user};
 	});
-var $elm$json$Json$Decode$field = _Json_decodeField;
-var $elm$json$Json$Decode$list = _Json_decodeList;
-var $elm$json$Json$Decode$map3 = _Json_map3;
-var $author$project$Main$Shift = F6(
-	function (id, date, startTime, endTime, exitByEndTime, isAvailable) {
-		return {date: date, endTime: endTime, exitByEndTime: exitByEndTime, id: id, isAvailable: isAvailable, startTime: startTime};
+var $author$project$Main$ConfirmedShift = F6(
+	function (id, date, startTime, endTime, exitByEndTime, note) {
+		return {date: date, endTime: endTime, exitByEndTime: exitByEndTime, id: id, note: note, startTime: startTime};
 	});
 var $elm$json$Json$Decode$bool = _Json_decodeBool;
+var $elm$json$Json$Decode$field = _Json_decodeField;
 var $elm$json$Json$Decode$map6 = _Json_map6;
 var $elm$json$Json$Decode$null = _Json_decodeNull;
 var $elm$json$Json$Decode$oneOf = _Json_oneOf;
@@ -5308,9 +5306,41 @@ var $elm$json$Json$Decode$nullable = function (decoder) {
 				A2($elm$json$Json$Decode$map, $elm$core$Maybe$Just, decoder)
 			]));
 };
-var $author$project$Main$shiftDecoder = A7(
+var $elm$core$Maybe$withDefault = F2(
+	function (_default, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return value;
+		} else {
+			return _default;
+		}
+	});
+var $author$project$Main$confirmedShiftDecoder = A7(
 	$elm$json$Json$Decode$map6,
-	$author$project$Main$Shift,
+	$author$project$Main$ConfirmedShift,
+	A2($elm$json$Json$Decode$field, 'id', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'date', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'start_time', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'end_time', $elm$json$Json$Decode$string),
+	A2(
+		$elm$json$Json$Decode$map,
+		$elm$core$Maybe$withDefault(false),
+		A2(
+			$elm$json$Json$Decode$field,
+			'exit_by_end_time',
+			$elm$json$Json$Decode$nullable($elm$json$Json$Decode$bool))),
+	A2(
+		$elm$json$Json$Decode$field,
+		'note',
+		$elm$json$Json$Decode$nullable($elm$json$Json$Decode$string)));
+var $elm$json$Json$Decode$list = _Json_decodeList;
+var $author$project$Main$ShiftRequest = F6(
+	function (id, date, startTime, endTime, exitByEndTime, isAvailable) {
+		return {date: date, endTime: endTime, exitByEndTime: exitByEndTime, id: id, isAvailable: isAvailable, startTime: startTime};
+	});
+var $author$project$Main$shiftRequestDecoder = A7(
+	$elm$json$Json$Decode$map6,
+	$author$project$Main$ShiftRequest,
 	A2($elm$json$Json$Decode$field, 'id', $elm$json$Json$Decode$string),
 	A2($elm$json$Json$Decode$field, 'date', $elm$json$Json$Decode$string),
 	A2(
@@ -5322,9 +5352,12 @@ var $author$project$Main$shiftDecoder = A7(
 		'end_time',
 		$elm$json$Json$Decode$nullable($elm$json$Json$Decode$string)),
 	A2(
-		$elm$json$Json$Decode$field,
-		'exit_by_end_time',
-		$elm$json$Json$Decode$nullable($elm$json$Json$Decode$bool)),
+		$elm$json$Json$Decode$map,
+		$elm$core$Maybe$withDefault(false),
+		A2(
+			$elm$json$Json$Decode$field,
+			'exit_by_end_time',
+			$elm$json$Json$Decode$nullable($elm$json$Json$Decode$bool))),
 	A2($elm$json$Json$Decode$field, 'is_available', $elm$json$Json$Decode$bool));
 var $author$project$Main$User = F4(
 	function (id, name, role, lineUserId) {
@@ -5341,15 +5374,24 @@ var $author$project$Main$userDecoder = A5(
 		$elm$json$Json$Decode$nullable($elm$json$Json$Decode$string)),
 	A2($elm$json$Json$Decode$field, 'role', $elm$json$Json$Decode$string),
 	A2($elm$json$Json$Decode$field, 'line_user_id', $elm$json$Json$Decode$string));
-var $author$project$Main$dataDecoder = A4(
-	$elm$json$Json$Decode$map3,
+var $author$project$Main$dataDecoder = A7(
+	$elm$json$Json$Decode$map6,
 	$author$project$Main$Data,
 	A2($elm$json$Json$Decode$field, 'user', $author$project$Main$userDecoder),
+	A2($elm$json$Json$Decode$field, 'current_week_start_date', $elm$json$Json$Decode$string),
+	A2(
+		$elm$json$Json$Decode$field,
+		'current_week_shifts',
+		$elm$json$Json$Decode$list($author$project$Main$confirmedShiftDecoder)),
+	A2($elm$json$Json$Decode$field, 'next_week_start_date', $elm$json$Json$Decode$string),
 	A2(
 		$elm$json$Json$Decode$field,
 		'next_week_shifts',
-		$elm$json$Json$Decode$list($author$project$Main$shiftDecoder)),
-	A2($elm$json$Json$Decode$field, 'week_start_date', $elm$json$Json$Decode$string));
+		$elm$json$Json$Decode$list($author$project$Main$shiftRequestDecoder)),
+	A2(
+		$elm$json$Json$Decode$field,
+		'next_week_confirmed_shifts',
+		$elm$json$Json$Decode$list($author$project$Main$confirmedShiftDecoder)));
 var $elm$json$Json$Decode$decodeValue = _Json_run;
 var $author$project$Main$fromDataPayload = F2(
 	function (source, value) {
@@ -5364,7 +5406,7 @@ var $author$project$Main$fromDataPayload = F2(
 		} else {
 			var err = _v0.a;
 			return $author$project$Main$GotError(
-				'Failed to decode ' + (source + (': ' + $elm$json$Json$Decode$errorToString(err))));
+				'Decode error in ' + (source + (': ' + $elm$json$Json$Decode$errorToString(err))));
 		}
 	});
 var $author$project$Main$shiftSubmitResponse = _Platform_incomingPort('shiftSubmitResponse', $elm$json$Json$Decode$value);
@@ -5386,6 +5428,7 @@ var $author$project$Main$Authenticated = F2(
 	function (a, b) {
 		return {$: 'Authenticated', a: a, b: b};
 	});
+var $author$project$Main$Confirmed = {$: 'Confirmed'};
 var $author$project$Main$Home = {$: 'Home'};
 var $author$project$Main$NextWeekShiftPage = function (a) {
 	return {$: 'NextWeekShiftPage', a: a};
@@ -5397,7 +5440,7 @@ var $author$project$Main$Register = function (a) {
 var $author$project$Main$Submitted = {$: 'Submitted'};
 var $author$project$Main$Unsubmitted = {$: 'Unsubmitted'};
 var $elm$json$Json$Encode$bool = _Json_wrap;
-var $elm$core$Basics$not = _Basics_not;
+var $elm$core$Basics$neq = _Utils_notEqual;
 var $elm$json$Json$Encode$null = _Json_encodeNull;
 var $elm$json$Json$Encode$object = function (pairs) {
 	return _Json_wrap(
@@ -5413,25 +5456,25 @@ var $elm$json$Json$Encode$object = function (pairs) {
 			pairs));
 };
 var $elm$json$Json$Encode$string = _Json_wrap;
-var $author$project$Main$encodeShiftInput = function (input) {
+var $author$project$Main$encodeShiftInput = function (shiftInput) {
 	return $elm$json$Json$Encode$object(
 		_List_fromArray(
 			[
 				_Utils_Tuple2(
 				'date',
-				$elm$json$Json$Encode$string(input.date)),
+				$elm$json$Json$Encode$string(shiftInput.date)),
 				_Utils_Tuple2(
 				'is_available',
-				$elm$json$Json$Encode$bool(input.isAvailable)),
+				$elm$json$Json$Encode$bool(shiftInput.isAvailable)),
 				_Utils_Tuple2(
 				'start_time',
-				(input.isAvailable && (!$elm$core$String$isEmpty(input.startTime))) ? $elm$json$Json$Encode$string(input.startTime) : $elm$json$Json$Encode$null),
+				(shiftInput.isAvailable && (shiftInput.startTime !== '')) ? $elm$json$Json$Encode$string(shiftInput.startTime) : $elm$json$Json$Encode$null),
 				_Utils_Tuple2(
 				'end_time',
-				(input.isAvailable && (!$elm$core$String$isEmpty(input.endTime))) ? $elm$json$Json$Encode$string(input.endTime) : $elm$json$Json$Encode$null),
+				(shiftInput.isAvailable && (shiftInput.endTime !== '')) ? $elm$json$Json$Encode$string(shiftInput.endTime) : $elm$json$Json$Encode$null),
 				_Utils_Tuple2(
 				'exit_by_end_time',
-				input.isAvailable ? $elm$json$Json$Encode$bool(input.exitByEndTime) : $elm$json$Json$Encode$null)
+				$elm$json$Json$Encode$bool(shiftInput.exitByEndTime))
 			]));
 };
 var $elm$json$Json$Encode$list = F2(
@@ -5452,7 +5495,7 @@ var $author$project$Main$encodeShiftInputs = F3(
 					'user_id',
 					$elm$json$Json$Encode$string(userId)),
 					_Utils_Tuple2(
-					'week_start_date',
+					'next_week_start_date',
 					$elm$json$Json$Encode$string(weekStartDate)),
 					_Utils_Tuple2(
 					'shifts',
@@ -5487,86 +5530,69 @@ var $elm$core$String$padLeft = F3(
 			string);
 	});
 var $author$project$Main$formatDateStr = F3(
-	function (year, month, day) {
-		return $elm$core$String$fromInt(year) + ('-' + (A3(
+	function (y, m, d) {
+		return $elm$core$String$fromInt(y) + ('-' + (A3(
 			$elm$core$String$padLeft,
 			2,
 			_Utils_chr('0'),
-			$elm$core$String$fromInt(month)) + ('-' + A3(
+			$elm$core$String$fromInt(m)) + ('-' + A3(
 			$elm$core$String$padLeft,
 			2,
 			_Utils_chr('0'),
-			$elm$core$String$fromInt(day)))));
+			$elm$core$String$fromInt(d)))));
 	});
 var $elm$core$Basics$modBy = _Basics_modBy;
-var $elm$core$Basics$neq = _Utils_notEqual;
-var $author$project$Main$isLeapYear = function (year) {
-	return (!A2($elm$core$Basics$modBy, 4, year)) && ((!(!A2($elm$core$Basics$modBy, 100, year))) || (!A2($elm$core$Basics$modBy, 400, year)));
+var $author$project$Main$isLeapYear = function (y) {
+	return (!A2($elm$core$Basics$modBy, 4, y)) && ((!(!A2($elm$core$Basics$modBy, 100, y))) || (!A2($elm$core$Basics$modBy, 400, y)));
 };
 var $author$project$Main$getDaysInMonth = F2(
 	function (year, month) {
 		switch (month) {
-			case 1:
-				return 31;
 			case 2:
 				return $author$project$Main$isLeapYear(year) ? 29 : 28;
-			case 3:
-				return 31;
 			case 4:
 				return 30;
-			case 5:
-				return 31;
 			case 6:
 				return 30;
-			case 7:
-				return 31;
-			case 8:
-				return 31;
 			case 9:
 				return 30;
-			case 10:
-				return 31;
 			case 11:
 				return 30;
-			case 12:
-				return 31;
 			default:
-				return 30;
+				return 31;
 		}
 	});
 var $author$project$Main$addDays = F4(
 	function (year, month, day, offset) {
 		var newDay = day + offset;
-		var daysInMonth = A2($author$project$Main$getDaysInMonth, year, month);
-		if (_Utils_cmp(newDay, daysInMonth) < 1) {
+		var daysInM = A2($author$project$Main$getDaysInMonth, year, month);
+		if (_Utils_cmp(newDay, daysInM) < 1) {
 			return A3($author$project$Main$formatDateStr, year, month, newDay);
 		} else {
-			var remainingDays = newDay - daysInMonth;
-			var nextMonth = month + 1;
-			return (nextMonth > 12) ? A3($author$project$Main$formatDateStr, year + 1, 1, remainingDays) : A3($author$project$Main$formatDateStr, year, nextMonth, remainingDays);
+			var rem = newDay - daysInM;
+			var nextM = month + 1;
+			return (nextM > 12) ? A3($author$project$Main$formatDateStr, year + 1, 1, rem) : A3($author$project$Main$formatDateStr, year, nextM, rem);
 		}
 	});
 var $author$project$Main$generateWeekDates = function (mondayStr) {
 	var _v0 = A2($elm$core$String$split, '-', mondayStr);
 	if (((_v0.b && _v0.b.b) && _v0.b.b.b) && (!_v0.b.b.b.b)) {
-		var yearStr = _v0.a;
+		var y = _v0.a;
 		var _v1 = _v0.b;
-		var monthStr = _v1.a;
+		var m = _v1.a;
 		var _v2 = _v1.b;
-		var dayStr = _v2.a;
+		var d = _v2.a;
 		var _v3 = _Utils_Tuple3(
-			$elm$core$String$toInt(yearStr),
-			$elm$core$String$toInt(monthStr),
-			$elm$core$String$toInt(dayStr));
+			$elm$core$String$toInt(y),
+			$elm$core$String$toInt(m),
+			$elm$core$String$toInt(d));
 		if (((_v3.a.$ === 'Just') && (_v3.b.$ === 'Just')) && (_v3.c.$ === 'Just')) {
 			var year = _v3.a.a;
 			var month = _v3.b.a;
 			var day = _v3.c.a;
 			return A2(
 				$elm$core$List$map,
-				function (offset) {
-					return A4($author$project$Main$addDays, year, month, day, offset);
-				},
+				A3($author$project$Main$addDays, year, month, day),
 				A2($elm$core$List$range, 0, 6));
 		} else {
 			return _List_Nil;
@@ -5599,40 +5625,27 @@ var $elm$core$List$head = function (list) {
 		return $elm$core$Maybe$Nothing;
 	}
 };
-var $author$project$Main$findShiftByDate = F2(
-	function (date, shifts) {
-		return $elm$core$List$head(
-			A2(
-				$elm$core$List$filter,
-				function (s) {
-					return _Utils_eq(s.date, date);
-				},
-				shifts));
-	});
-var $elm$core$Maybe$withDefault = F2(
-	function (_default, maybe) {
-		if (maybe.$ === 'Just') {
-			var value = maybe.a;
-			return value;
-		} else {
-			return _default;
-		}
-	});
 var $author$project$Main$initializeShiftInputs = F2(
-	function (dates, existingShifts) {
+	function (dates, requests) {
 		return A2(
 			$elm$core$List$map,
 			function (date) {
-				var _v0 = A2($author$project$Main$findShiftByDate, date, existingShifts);
+				var _v0 = $elm$core$List$head(
+					A2(
+						$elm$core$List$filter,
+						function (r) {
+							return _Utils_eq(r.date, date);
+						},
+						requests));
 				if (_v0.$ === 'Just') {
-					var shift = _v0.a;
+					var req = _v0.a;
 					return A5(
 						$author$project$Main$ShiftInput,
 						date,
-						shift.isAvailable,
-						A2($elm$core$Maybe$withDefault, '', shift.startTime),
-						A2($elm$core$Maybe$withDefault, '', shift.endTime),
-						A2($elm$core$Maybe$withDefault, false, shift.exitByEndTime));
+						req.isAvailable,
+						A2($elm$core$Maybe$withDefault, '', req.startTime),
+						A2($elm$core$Maybe$withDefault, '', req.endTime),
+						req.exitByEndTime);
 				} else {
 					return A5($author$project$Main$ShiftInput, date, true, '', '', false);
 				}
@@ -5739,6 +5752,8 @@ var $author$project$Main$isMonToWed = function (now) {
 };
 var $elm$core$Platform$Cmd$batch = _Platform_batch;
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
+var $elm$core$Basics$not = _Basics_not;
+var $elm$core$Process$sleep = _Process_sleep;
 var $elm$time$Time$toHour = F2(
 	function (zone, time) {
 		return A2(
@@ -5766,22 +5781,17 @@ var $elm$time$Time$toSecond = F2(
 				$elm$time$Time$posixToMillis(time),
 				1000));
 	});
-var $author$project$Main$millisToNextJstMidnight = function (now) {
+var $author$project$Main$scheduleNextJstMidnight = function (now) {
 	var s = A2($elm$time$Time$toSecond, $author$project$Main$jst, now);
 	var ms = A2(
 		$elm$core$Basics$modBy,
 		1000,
 		$elm$time$Time$posixToMillis(now));
-	var millisPerDay = ((24 * 60) * 60) * 1000;
+	var millisPerDay = 86400000;
 	var m = A2($elm$time$Time$toMinute, $author$project$Main$jst, now);
 	var h = A2($elm$time$Time$toHour, $author$project$Main$jst, now);
-	var millisPassedToday = (((((h * 60) + m) * 60) + s) * 1000) + ms;
-	var remaining = millisPerDay - millisPassedToday;
-	return (!remaining) ? millisPerDay : remaining;
-};
-var $elm$core$Process$sleep = _Process_sleep;
-var $author$project$Main$scheduleNextJstMidnight = function (now) {
-	var ms = $author$project$Main$millisToNextJstMidnight(now);
+	var millisPassed = (((((h * 60) + m) * 60) + s) * 1000) + ms;
+	var rem = millisPerDay - millisPassed;
 	return A2(
 		$elm$core$Task$perform,
 		$author$project$Main$GotNow,
@@ -5790,7 +5800,8 @@ var $author$project$Main$scheduleNextJstMidnight = function (now) {
 			function (_v0) {
 				return $elm$time$Time$now;
 			},
-			$elm$core$Process$sleep(ms)));
+			$elm$core$Process$sleep(
+				(!rem) ? millisPerDay : rem)));
 };
 var $author$project$Main$setAuthenticated = F2(
 	function (data, model) {
@@ -5820,6 +5831,19 @@ var $author$project$Main$setPage = F2(
 	});
 var $author$project$Main$shiftSubmitRequest = _Platform_outgoingPort('shiftSubmitRequest', $elm$core$Basics$identity);
 var $elm$core$String$trim = _String_trim;
+var $author$project$Main$updateShiftInput = F3(
+	function (date, transform, model) {
+		var updateInput = function (input) {
+			return _Utils_eq(input.date, date) ? transform(input) : input;
+		};
+		return _Utils_Tuple2(
+			_Utils_update(
+				model,
+				{
+					shiftInputs: A2($elm$core$List$map, updateInput, model.shiftInputs)
+				}),
+			$elm$core$Platform$Cmd$none);
+	});
 var $author$project$Main$usernameRegistrationRequest = _Platform_outgoingPort(
 	'usernameRegistrationRequest',
 	function ($) {
@@ -5839,12 +5863,12 @@ var $author$project$Main$update = F2(
 		switch (msg.$) {
 			case 'GotNow':
 				var now = msg.a;
-				var flag = $author$project$Main$isMonToWed(now);
+				var isMonWed = $author$project$Main$isMonToWed(now);
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
 						{
-							showMonToWed: $elm$core$Maybe$Just(flag)
+							showMonToWed: $elm$core$Maybe$Just(isMonWed)
 						}),
 					$author$project$Main$scheduleNextJstMidnight(now));
 			case 'UserArrived':
@@ -5894,20 +5918,12 @@ var $author$project$Main$update = F2(
 					var page = _v2.b;
 					switch (page.$) {
 						case 'Home':
-							var weekDates = $author$project$Main$generateWeekDates(data.weekStartDate);
-							var shiftState = function () {
-								var _v4 = model.showMonToWed;
-								if (_v4.$ === 'Just') {
-									if (_v4.a) {
-										return $elm$core$List$isEmpty(data.nextWeekShifts) ? $author$project$Main$Unsubmitted : $author$project$Main$Submitted;
-									} else {
-										return $author$project$Main$Pending;
-									}
-								} else {
-									return $author$project$Main$Unsubmitted;
-								}
-							}();
+							var weekDates = $author$project$Main$generateWeekDates(data.nextWeekStartDate);
+							var isEditPeriod = A2($elm$core$Maybe$withDefault, false, model.showMonToWed);
 							var initialInputs = A2($author$project$Main$initializeShiftInputs, weekDates, data.nextWeekShifts);
+							var hasRequests = !$elm$core$List$isEmpty(data.nextWeekShifts);
+							var hasConfirmedNextWeek = !$elm$core$List$isEmpty(data.nextWeekConfirmedShifts);
+							var shiftState = hasConfirmedNextWeek ? $author$project$Main$Confirmed : (isEditPeriod ? (hasRequests ? $author$project$Main$Submitted : $author$project$Main$Unsubmitted) : $author$project$Main$Pending);
 							return _Utils_Tuple2(
 								_Utils_update(
 									model,
@@ -5936,53 +5952,56 @@ var $author$project$Main$update = F2(
 			case 'UpdateShiftAvailability':
 				var date = msg.a;
 				var isAvailable = msg.b;
-				var updateInput = function (input) {
-					return _Utils_eq(input.date, date) ? _Utils_update(
-						input,
-						{isAvailable: isAvailable}) : input;
-				};
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{
-							shiftInputs: A2($elm$core$List$map, updateInput, model.shiftInputs)
-						}),
-					$elm$core$Platform$Cmd$none);
+				return A3(
+					$author$project$Main$updateShiftInput,
+					date,
+					function (input) {
+						return _Utils_update(
+							input,
+							{isAvailable: isAvailable});
+					},
+					model);
 			case 'UpdateShiftStartTime':
 				var date = msg.a;
 				var time = msg.b;
-				var updateInput = function (input) {
-					return _Utils_eq(input.date, date) ? _Utils_update(
-						input,
-						{startTime: time}) : input;
-				};
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{
-							shiftInputs: A2($elm$core$List$map, updateInput, model.shiftInputs)
-						}),
-					$elm$core$Platform$Cmd$none);
+				return A3(
+					$author$project$Main$updateShiftInput,
+					date,
+					function (input) {
+						return _Utils_update(
+							input,
+							{startTime: time});
+					},
+					model);
 			case 'UpdateShiftEndTime':
 				var date = msg.a;
 				var time = msg.b;
-				var updateInput = function (input) {
-					return _Utils_eq(input.date, date) ? _Utils_update(
-						input,
-						{endTime: time}) : input;
-				};
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{
-							shiftInputs: A2($elm$core$List$map, updateInput, model.shiftInputs)
-						}),
-					$elm$core$Platform$Cmd$none);
+				return A3(
+					$author$project$Main$updateShiftInput,
+					date,
+					function (input) {
+						return _Utils_update(
+							input,
+							{endTime: time});
+					},
+					model);
+			case 'UpdateShiftExitByEndTime':
+				var date = msg.a;
+				var value = msg.b;
+				return A3(
+					$author$project$Main$updateShiftInput,
+					date,
+					function (input) {
+						return _Utils_update(
+							input,
+							{exitByEndTime: value});
+					},
+					model);
 			case 'SubmitShifts':
-				var _v5 = model.appState;
-				if (_v5.$ === 'Authenticated') {
-					var data = _v5.a;
-					var shiftsJson = A3($author$project$Main$encodeShiftInputs, data.user.id, data.weekStartDate, model.shiftInputs);
+				var _v4 = model.appState;
+				if (_v4.$ === 'Authenticated') {
+					var data = _v4.a;
+					var shiftsJson = A3($author$project$Main$encodeShiftInputs, data.user.id, data.nextWeekStartDate, model.shiftInputs);
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
@@ -6013,52 +6032,8 @@ var $elm$html$Html$Attributes$stringProperty = F2(
 	});
 var $elm$html$Html$Attributes$class = $elm$html$Html$Attributes$stringProperty('className');
 var $elm$html$Html$div = _VirtualDom_node('div');
-var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
-var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
 var $author$project$Main$TogglePage = {$: 'TogglePage'};
 var $elm$html$Html$button = _VirtualDom_node('button');
-var $elm$html$Html$h1 = _VirtualDom_node('h1');
-var $elm$html$Html$h2 = _VirtualDom_node('h2');
-var $elm$virtual_dom$VirtualDom$Normal = function (a) {
-	return {$: 'Normal', a: a};
-};
-var $elm$virtual_dom$VirtualDom$on = _VirtualDom_on;
-var $elm$html$Html$Events$on = F2(
-	function (event, decoder) {
-		return A2(
-			$elm$virtual_dom$VirtualDom$on,
-			event,
-			$elm$virtual_dom$VirtualDom$Normal(decoder));
-	});
-var $elm$html$Html$Events$onClick = function (msg) {
-	return A2(
-		$elm$html$Html$Events$on,
-		'click',
-		$elm$json$Json$Decode$succeed(msg));
-};
-var $elm$html$Html$span = _VirtualDom_node('span');
-var $author$project$Main$viewShiftStatusBadge = function (shifts) {
-	return $elm$core$List$isEmpty(shifts) ? A2(
-		$elm$html$Html$span,
-		_List_fromArray(
-			[
-				$elm$html$Html$Attributes$class('px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium')
-			]),
-		_List_fromArray(
-			[
-				$elm$html$Html$text('未提出')
-			])) : A2(
-		$elm$html$Html$span,
-		_List_fromArray(
-			[
-				$elm$html$Html$Attributes$class('px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium')
-			]),
-		_List_fromArray(
-			[
-				$elm$html$Html$text('提出済')
-			]));
-};
-var $elm$html$Html$p = _VirtualDom_node('p');
 var $elm$core$Maybe$map = F2(
 	function (f, maybe) {
 		if (maybe.$ === 'Just') {
@@ -6069,7 +6044,7 @@ var $elm$core$Maybe$map = F2(
 			return $elm$core$Maybe$Nothing;
 		}
 	});
-var $author$project$Main$formatDate = function (dateStr) {
+var $author$project$Main$formatDateShort = function (dateStr) {
 	var _v0 = A2($elm$core$String$split, '-', dateStr);
 	if (((_v0.b && _v0.b.b) && _v0.b.b.b) && (!_v0.b.b.b.b)) {
 		var _v1 = _v0.b;
@@ -6089,29 +6064,49 @@ var $author$project$Main$formatDate = function (dateStr) {
 		return dateStr;
 	}
 };
+var $elm$html$Html$h1 = _VirtualDom_node('h1');
+var $elm$html$Html$h2 = _VirtualDom_node('h2');
+var $elm$virtual_dom$VirtualDom$Normal = function (a) {
+	return {$: 'Normal', a: a};
+};
+var $elm$virtual_dom$VirtualDom$on = _VirtualDom_on;
+var $elm$html$Html$Events$on = F2(
+	function (event, decoder) {
+		return A2(
+			$elm$virtual_dom$VirtualDom$on,
+			event,
+			$elm$virtual_dom$VirtualDom$Normal(decoder));
+	});
+var $elm$html$Html$Events$onClick = function (msg) {
+	return A2(
+		$elm$html$Html$Events$on,
+		'click',
+		$elm$json$Json$Decode$succeed(msg));
+};
+var $elm$html$Html$p = _VirtualDom_node('p');
+var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
+var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
 var $author$project$Main$getWeekdayFromDate = function (dateStr) {
 	var _v0 = A2($elm$core$String$split, '-', dateStr);
 	if (((_v0.b && _v0.b.b) && _v0.b.b.b) && (!_v0.b.b.b.b)) {
-		var yearStr = _v0.a;
+		var yStr = _v0.a;
 		var _v1 = _v0.b;
-		var monthStr = _v1.a;
+		var mStr = _v1.a;
 		var _v2 = _v1.b;
-		var dayStr = _v2.a;
+		var dStr = _v2.a;
 		var _v3 = _Utils_Tuple3(
-			$elm$core$String$toInt(yearStr),
-			$elm$core$String$toInt(monthStr),
-			$elm$core$String$toInt(dayStr));
+			$elm$core$String$toInt(yStr),
+			$elm$core$String$toInt(mStr),
+			$elm$core$String$toInt(dStr));
 		if (((_v3.a.$ === 'Just') && (_v3.b.$ === 'Just')) && (_v3.c.$ === 'Just')) {
 			var y = _v3.a.a;
 			var m = _v3.b.a;
 			var d = _v3.c.a;
-			var q = d;
-			var adjustedYear = (m < 3) ? (y - 1) : y;
-			var j = (adjustedYear / 100) | 0;
-			var k = A2($elm$core$Basics$modBy, 100, adjustedYear);
-			var adjustedMonth = (m < 3) ? (m + 12) : m;
-			var m_ = adjustedMonth;
-			var h = A2($elm$core$Basics$modBy, 7, ((((q + (((13 * (m_ + 1)) / 5) | 0)) + k) + ((k / 4) | 0)) + ((j / 4) | 0)) - (2 * j));
+			var adjY = (m < 3) ? (y - 1) : y;
+			var j = (adjY / 100) | 0;
+			var k = A2($elm$core$Basics$modBy, 100, adjY);
+			var adjM = (m < 3) ? (m + 12) : m;
+			var h = A2($elm$core$Basics$modBy, 7, ((((d + (((13 * (adjM + 1)) / 5) | 0)) + k) + ((k / 4) | 0)) + ((j / 4) | 0)) - (2 * j));
 			var dayOfWeek = A2($elm$core$Basics$modBy, 7, h + 5);
 			switch (dayOfWeek) {
 				case 0:
@@ -6140,15 +6135,17 @@ var $author$project$Main$getWeekdayFromDate = function (dateStr) {
 };
 var $author$project$Main$formatDateWithWeekday = function (dateStr) {
 	var weekday = $author$project$Main$getWeekdayFromDate(dateStr);
-	var formatted = $author$project$Main$formatDate(dateStr);
+	var formatted = $author$project$Main$formatDateShort(dateStr);
 	return formatted + (' (' + (weekday + ')'));
 };
-var $author$project$Main$viewShiftRow = function (shift) {
+var $elm$html$Html$h3 = _VirtualDom_node('h3');
+var $elm$html$Html$span = _VirtualDom_node('span');
+var $author$project$Main$viewConfirmedShiftCard = function (shift) {
 	return A2(
 		$elm$html$Html$div,
 		_List_fromArray(
 			[
-				$elm$html$Html$Attributes$class('px-4 py-3')
+				$elm$html$Html$Attributes$class('bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-stretch relative overflow-hidden')
 			]),
 		_List_fromArray(
 			[
@@ -6156,7 +6153,14 @@ var $author$project$Main$viewShiftRow = function (shift) {
 				$elm$html$Html$div,
 				_List_fromArray(
 					[
-						$elm$html$Html$Attributes$class('flex justify-between items-center')
+						$elm$html$Html$Attributes$class('absolute left-0 top-0 bottom-0 w-1.5 bg-green-500')
+					]),
+				_List_Nil),
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$class('flex-1 pl-3')
 					]),
 				_List_fromArray(
 					[
@@ -6164,89 +6168,364 @@ var $author$project$Main$viewShiftRow = function (shift) {
 						$elm$html$Html$div,
 						_List_fromArray(
 							[
-								$elm$html$Html$Attributes$class('space-y-1')
+								$elm$html$Html$Attributes$class('flex justify-between items-start mb-1')
 							]),
 						_List_fromArray(
 							[
 								A2(
-								$elm$html$Html$div,
+								$elm$html$Html$h3,
 								_List_fromArray(
 									[
-										$elm$html$Html$Attributes$class('font-medium text-gray-900')
+										$elm$html$Html$Attributes$class('font-bold text-lg text-gray-800')
 									]),
 								_List_fromArray(
 									[
 										$elm$html$Html$text(
 										$author$project$Main$formatDateWithWeekday(shift.date))
 									])),
-								function () {
-								var _v0 = _Utils_Tuple2(shift.startTime, shift.endTime);
-								if ((_v0.a.$ === 'Just') && (_v0.b.$ === 'Just')) {
-									var start = _v0.a.a;
-									var end = _v0.b.a;
-									return A2(
-										$elm$html$Html$div,
-										_List_fromArray(
-											[
-												$elm$html$Html$Attributes$class('text-sm text-gray-600')
-											]),
-										_List_fromArray(
-											[
-												$elm$html$Html$text(start + (' 〜 ' + end))
-											]));
-								} else {
-									return $elm$html$Html$text('');
-								}
-							}()
+								shift.exitByEndTime ? A2(
+								$elm$html$Html$span,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('bg-orange-100 text-orange-700 text-[10px] font-bold px-2 py-0.5 rounded-full')
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text('LAST')
+									])) : $elm$html$Html$text('')
 							])),
 						A2(
-						$elm$html$Html$span,
+						$elm$html$Html$div,
 						_List_fromArray(
 							[
-								$elm$html$Html$Attributes$class(
-								shift.isAvailable ? 'px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium' : 'px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium')
+								$elm$html$Html$Attributes$class('flex items-center text-gray-600 font-medium text-base')
 							]),
 						_List_fromArray(
 							[
-								$elm$html$Html$text(
-								shift.isAvailable ? '✓ 出勤可' : '✕ 出勤不可')
-							]))
+								A2(
+								$elm$html$Html$span,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('mr-2 text-lg')
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text('⏰')
+									])),
+								$elm$html$Html$text(shift.startTime + (' 〜 ' + shift.endTime))
+							])),
+						function () {
+						var _v0 = shift.note;
+						if (_v0.$ === 'Just') {
+							var n = _v0.a;
+							return $elm$core$String$isEmpty(n) ? $elm$html$Html$text('') : A2(
+								$elm$html$Html$div,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('mt-3 bg-yellow-50 text-yellow-800 text-xs p-2 rounded-lg')
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text('💬 ' + n)
+									]));
+						} else {
+							return $elm$html$Html$text('');
+						}
+					}()
 					]))
 			]));
 };
-var $author$project$Main$viewShiftsCompact = function (shifts) {
-	return $elm$core$List$isEmpty(shifts) ? A2(
-		$elm$html$Html$div,
-		_List_fromArray(
-			[
-				$elm$html$Html$Attributes$class('bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-3 text-center')
-			]),
-		_List_fromArray(
-			[
-				A2(
-				$elm$html$Html$p,
-				_List_fromArray(
-					[
-						$elm$html$Html$Attributes$class('text-yellow-700 text-sm')
-					]),
-				_List_fromArray(
-					[
-						$elm$html$Html$text('まだシフト希望が提出されていません')
-					]))
-			])) : A2(
-		$elm$html$Html$div,
-		_List_fromArray(
-			[
-				$elm$html$Html$Attributes$class('bg-white border border-gray-200 rounded-lg divide-y divide-gray-200')
-			]),
-		A2($elm$core$List$map, $author$project$Main$viewShiftRow, shifts));
-};
-var $author$project$Main$viewHome = function (data) {
+var $author$project$Main$viewHome = F2(
+	function (data, showMonToWed) {
+		return A2(
+			$elm$html$Html$div,
+			_List_fromArray(
+				[
+					$elm$html$Html$Attributes$class('max-w-md mx-auto w-full')
+				]),
+			_List_fromArray(
+				[
+					A2(
+					$elm$html$Html$div,
+					_List_fromArray(
+						[
+							$elm$html$Html$Attributes$class('bg-white px-6 pt-8 pb-6 shadow-sm rounded-b-3xl mb-6')
+						]),
+					_List_fromArray(
+						[
+							A2(
+							$elm$html$Html$div,
+							_List_fromArray(
+								[
+									$elm$html$Html$Attributes$class('flex justify-between items-center mb-4')
+								]),
+							_List_fromArray(
+								[
+									A2(
+									$elm$html$Html$div,
+									_List_Nil,
+									_List_fromArray(
+										[
+											A2(
+											$elm$html$Html$p,
+											_List_fromArray(
+												[
+													$elm$html$Html$Attributes$class('text-xs text-gray-400 font-bold uppercase tracking-wider mb-1')
+												]),
+											_List_fromArray(
+												[
+													$elm$html$Html$text('Welcome')
+												])),
+											A2(
+											$elm$html$Html$h1,
+											_List_fromArray(
+												[
+													$elm$html$Html$Attributes$class('text-2xl font-extrabold text-gray-900')
+												]),
+											_List_fromArray(
+												[
+													$elm$html$Html$text(
+													A2($elm$core$Maybe$withDefault, 'ゲスト', data.user.name))
+												]))
+										])),
+									A2(
+									$elm$html$Html$div,
+									_List_fromArray(
+										[
+											$elm$html$Html$Attributes$class('h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-xl shadow-inner')
+										]),
+									_List_fromArray(
+										[
+											$elm$html$Html$text(
+											A2(
+												$elm$core$String$left,
+												1,
+												A2($elm$core$Maybe$withDefault, 'G', data.user.name)))
+										]))
+								])),
+							function () {
+							var isMonWed = A2($elm$core$Maybe$withDefault, false, showMonToWed);
+							var hasConfirmedNext = !$elm$core$List$isEmpty(data.nextWeekConfirmedShifts);
+							return hasConfirmedNext ? A2(
+								$elm$html$Html$button,
+								_List_fromArray(
+									[
+										$elm$html$Html$Events$onClick($author$project$Main$TogglePage),
+										$elm$html$Html$Attributes$class('w-full mt-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl p-4 shadow-lg shadow-green-200 active:scale-98 transition-transform flex items-center justify-between group')
+									]),
+								_List_fromArray(
+									[
+										A2(
+										$elm$html$Html$div,
+										_List_fromArray(
+											[
+												$elm$html$Html$Attributes$class('text-left')
+											]),
+										_List_fromArray(
+											[
+												A2(
+												$elm$html$Html$p,
+												_List_fromArray(
+													[
+														$elm$html$Html$Attributes$class('font-bold text-lg')
+													]),
+												_List_fromArray(
+													[
+														$elm$html$Html$text('来週のシフトが確定しました！')
+													])),
+												A2(
+												$elm$html$Html$p,
+												_List_fromArray(
+													[
+														$elm$html$Html$Attributes$class('text-xs text-white opacity-90')
+													]),
+												_List_fromArray(
+													[
+														$elm$html$Html$text('タップして確認する')
+													]))
+											])),
+										A2(
+										$elm$html$Html$div,
+										_List_fromArray(
+											[
+												$elm$html$Html$Attributes$class('bg-white/20 rounded-full p-2')
+											]),
+										_List_fromArray(
+											[
+												$elm$html$Html$text('✨')
+											]))
+									])) : (isMonWed ? A2(
+								$elm$html$Html$button,
+								_List_fromArray(
+									[
+										$elm$html$Html$Events$onClick($author$project$Main$TogglePage),
+										$elm$html$Html$Attributes$class('w-full mt-2 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl p-4 shadow-lg shadow-blue-200 active:scale-98 transition-transform flex items-center justify-between group')
+									]),
+								_List_fromArray(
+									[
+										A2(
+										$elm$html$Html$div,
+										_List_fromArray(
+											[
+												$elm$html$Html$Attributes$class('text-left')
+											]),
+										_List_fromArray(
+											[
+												A2(
+												$elm$html$Html$p,
+												_List_fromArray(
+													[
+														$elm$html$Html$Attributes$class('font-bold text-lg')
+													]),
+												_List_fromArray(
+													[
+														$elm$core$List$isEmpty(data.nextWeekShifts) ? $elm$html$Html$text('来週のシフト希望を出す') : $elm$html$Html$text('シフト希望を確認・修正する')
+													])),
+												A2(
+												$elm$html$Html$p,
+												_List_fromArray(
+													[
+														$elm$html$Html$Attributes$class('text-xs text-blue-100 opacity-90')
+													]),
+												_List_fromArray(
+													[
+														$elm$html$Html$text(
+														'対象: ' + ($author$project$Main$formatDateShort(data.nextWeekStartDate) + ' 〜'))
+													]))
+											])),
+										A2(
+										$elm$html$Html$div,
+										_List_fromArray(
+											[
+												$elm$html$Html$Attributes$class('bg-white/20 rounded-full p-2 group-hover:bg-white/30 transition')
+											]),
+										_List_fromArray(
+											[
+												$elm$html$Html$text('📝')
+											]))
+									])) : A2(
+								$elm$html$Html$button,
+								_List_fromArray(
+									[
+										$elm$html$Html$Events$onClick($author$project$Main$TogglePage),
+										$elm$html$Html$Attributes$class('w-full mt-2 bg-white border-2 border-gray-200 text-gray-600 rounded-xl p-4 active:scale-98 transition-transform flex items-center justify-between group hover:bg-gray-50')
+									]),
+								_List_fromArray(
+									[
+										A2(
+										$elm$html$Html$div,
+										_List_fromArray(
+											[
+												$elm$html$Html$Attributes$class('text-left')
+											]),
+										_List_fromArray(
+											[
+												A2(
+												$elm$html$Html$p,
+												_List_fromArray(
+													[
+														$elm$html$Html$Attributes$class('font-bold text-lg')
+													]),
+												_List_fromArray(
+													[
+														$elm$html$Html$text('提出内容を確認する')
+													])),
+												A2(
+												$elm$html$Html$p,
+												_List_fromArray(
+													[
+														$elm$html$Html$Attributes$class('text-xs text-gray-400')
+													]),
+												_List_fromArray(
+													[
+														$elm$html$Html$text('※現在は変更期間外です')
+													]))
+											])),
+										A2(
+										$elm$html$Html$div,
+										_List_fromArray(
+											[
+												$elm$html$Html$Attributes$class('bg-gray-100 rounded-full p-2 transition')
+											]),
+										_List_fromArray(
+											[
+												$elm$html$Html$text('👀')
+											]))
+									])));
+						}()
+						])),
+					A2(
+					$elm$html$Html$div,
+					_List_fromArray(
+						[
+							$elm$html$Html$Attributes$class('px-4')
+						]),
+					_List_fromArray(
+						[
+							A2(
+							$elm$html$Html$div,
+							_List_fromArray(
+								[
+									$elm$html$Html$Attributes$class('flex items-center mb-4 px-2')
+								]),
+							_List_fromArray(
+								[
+									$elm$html$Html$text('📅'),
+									A2(
+									$elm$html$Html$h2,
+									_List_fromArray(
+										[
+											$elm$html$Html$Attributes$class('text-lg font-bold text-gray-800 ml-2')
+										]),
+									_List_fromArray(
+										[
+											$elm$html$Html$text('今週の確定シフト')
+										]))
+								])),
+							$elm$core$List$isEmpty(data.currentWeekShifts) ? A2(
+							$elm$html$Html$div,
+							_List_fromArray(
+								[
+									$elm$html$Html$Attributes$class('bg-white border border-dashed border-gray-300 rounded-2xl p-8 text-center')
+								]),
+							_List_fromArray(
+								[
+									A2(
+									$elm$html$Html$p,
+									_List_fromArray(
+										[
+											$elm$html$Html$Attributes$class('text-4xl mb-2')
+										]),
+									_List_fromArray(
+										[
+											$elm$html$Html$text('☕️')
+										])),
+									A2(
+									$elm$html$Html$p,
+									_List_fromArray(
+										[
+											$elm$html$Html$Attributes$class('text-gray-500 font-medium')
+										]),
+									_List_fromArray(
+										[
+											$elm$html$Html$text('今週のシフトはありません')
+										]))
+								])) : A2(
+							$elm$html$Html$div,
+							_List_fromArray(
+								[
+									$elm$html$Html$Attributes$class('space-y-3')
+								]),
+							A2($elm$core$List$map, $author$project$Main$viewConfirmedShiftCard, data.currentWeekShifts))
+						]))
+				]));
+	});
+var $author$project$Main$viewLoading = function (error) {
 	return A2(
 		$elm$html$Html$div,
 		_List_fromArray(
 			[
-				$elm$html$Html$Attributes$class('w-full max-w-2xl')
+				$elm$html$Html$Attributes$class('flex flex-col items-center justify-center h-screen p-4')
 			]),
 		_List_fromArray(
 			[
@@ -6254,100 +6533,19 @@ var $author$project$Main$viewHome = function (data) {
 				$elm$html$Html$div,
 				_List_fromArray(
 					[
-						$elm$html$Html$Attributes$class('bg-white shadow-lg rounded-lg p-6 space-y-6')
+						$elm$html$Html$Attributes$class('animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4')
+					]),
+				_List_Nil),
+				A2(
+				$elm$html$Html$p,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$class('text-gray-500 text-sm')
 					]),
 				_List_fromArray(
 					[
-						A2(
-						$elm$html$Html$div,
-						_List_fromArray(
-							[
-								$elm$html$Html$Attributes$class('text-center space-y-4')
-							]),
-						_List_fromArray(
-							[
-								A2(
-								$elm$html$Html$h1,
-								_List_fromArray(
-									[
-										$elm$html$Html$Attributes$class('text-2xl font-bold text-gray-800')
-									]),
-								_List_fromArray(
-									[
-										$elm$html$Html$text('シフト管理システム')
-									])),
-								A2(
-								$elm$html$Html$div,
-								_List_fromArray(
-									[
-										$elm$html$Html$Attributes$class('bg-gray-50 rounded-lg p-4 space-y-2')
-									]),
-								_List_fromArray(
-									[
-										A2(
-										$elm$html$Html$div,
-										_List_fromArray(
-											[
-												$elm$html$Html$Attributes$class('text-sm text-gray-600')
-											]),
-										_List_fromArray(
-											[
-												$elm$html$Html$text('ユーザ名:')
-											])),
-										A2(
-										$elm$html$Html$div,
-										_List_fromArray(
-											[
-												$elm$html$Html$Attributes$class('font-semibold text-lg text-gray-900')
-											]),
-										_List_fromArray(
-											[
-												$elm$html$Html$text(
-												A2($elm$core$Maybe$withDefault, '未登録', data.user.name))
-											]))
-									]))
-							])),
-						A2(
-						$elm$html$Html$button,
-						_List_fromArray(
-							[
-								$elm$html$Html$Events$onClick($author$project$Main$TogglePage),
-								$elm$html$Html$Attributes$class('w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition font-semibold')
-							]),
-						_List_fromArray(
-							[
-								$elm$html$Html$text('📅 来週のシフト希望を入力・確認')
-							])),
-						A2(
-						$elm$html$Html$div,
-						_List_fromArray(
-							[
-								$elm$html$Html$Attributes$class('space-y-3')
-							]),
-						_List_fromArray(
-							[
-								A2(
-								$elm$html$Html$div,
-								_List_fromArray(
-									[
-										$elm$html$Html$Attributes$class('flex items-center justify-between')
-									]),
-								_List_fromArray(
-									[
-										A2(
-										$elm$html$Html$h2,
-										_List_fromArray(
-											[
-												$elm$html$Html$Attributes$class('text-lg font-bold text-gray-800')
-											]),
-										_List_fromArray(
-											[
-												$elm$html$Html$text('来週のシフト希望状況')
-											])),
-										$author$project$Main$viewShiftStatusBadge(data.nextWeekShifts)
-									])),
-								$author$project$Main$viewShiftsCompact(data.nextWeekShifts)
-							]))
+						$elm$html$Html$text(
+						A2($elm$core$Maybe$withDefault, '読み込み中...', error))
 					]))
 			]));
 };
@@ -6427,234 +6625,131 @@ var $author$project$Main$viewRegister = function (usernameInput) {
 		$elm$html$Html$div,
 		_List_fromArray(
 			[
-				$elm$html$Html$Attributes$class('w-full max-w-md')
+				$elm$html$Html$Attributes$class('flex flex-col items-center justify-center min-h-screen p-6')
 			]),
 		_List_fromArray(
 			[
 				A2(
-				$elm$html$Html$form,
+				$elm$html$Html$div,
 				_List_fromArray(
 					[
-						$elm$html$Html$Attributes$class('bg-white shadow-lg rounded-lg p-8 space-y-6'),
-						$elm$html$Html$Events$onSubmit($author$project$Main$SubmitUsername)
+						$elm$html$Html$Attributes$class('w-full max-w-sm bg-white rounded-3xl shadow-xl p-8')
 					]),
 				_List_fromArray(
 					[
 						A2(
-						$elm$html$Html$div,
+						$elm$html$Html$h1,
 						_List_fromArray(
 							[
-								$elm$html$Html$Attributes$class('text-center space-y-2')
+								$elm$html$Html$Attributes$class('text-2xl font-bold text-center text-gray-800 mb-2')
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('はじめまして')
+							])),
+						A2(
+						$elm$html$Html$p,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class('text-gray-500 text-center text-sm mb-8')
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('アプリで使用する名前を登録してください')
+							])),
+						A2(
+						$elm$html$Html$form,
+						_List_fromArray(
+							[
+								$elm$html$Html$Events$onSubmit($author$project$Main$SubmitUsername),
+								$elm$html$Html$Attributes$class('space-y-6')
 							]),
 						_List_fromArray(
 							[
 								A2(
-								$elm$html$Html$h1,
+								$elm$html$Html$div,
+								_List_Nil,
 								_List_fromArray(
 									[
-										$elm$html$Html$Attributes$class('text-2xl font-bold text-gray-800')
-									]),
-								_List_fromArray(
-									[
-										$elm$html$Html$text('ユーザ名登録')
+										A2(
+										$elm$html$Html$label,
+										_List_fromArray(
+											[
+												$elm$html$Html$Attributes$class('block text-sm font-bold text-gray-700 mb-2 ml-1')
+											]),
+										_List_fromArray(
+											[
+												$elm$html$Html$text('表示名')
+											])),
+										A2(
+										$elm$html$Html$input,
+										_List_fromArray(
+											[
+												$elm$html$Html$Attributes$type_('text'),
+												$elm$html$Html$Attributes$placeholder('入力してください'),
+												$elm$html$Html$Attributes$value(usernameInput),
+												$elm$html$Html$Events$onInput($author$project$Main$ChangeUsernameInput),
+												$elm$html$Html$Attributes$class('w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition text-lg')
+											]),
+										_List_Nil)
 									])),
 								A2(
-								$elm$html$Html$p,
+								$elm$html$Html$button,
 								_List_fromArray(
 									[
-										$elm$html$Html$Attributes$class('text-sm text-gray-600')
+										$elm$html$Html$Attributes$type_('submit'),
+										$elm$html$Html$Attributes$class('w-full bg-gray-900 text-white font-bold py-4 rounded-2xl shadow-lg disabled:opacity-50'),
+										$elm$html$Html$Attributes$disabled(
+										$elm$core$String$trim(usernameInput) === '')
 									]),
 								_List_fromArray(
 									[
-										$elm$html$Html$text('システムで使用する名前を登録してください')
+										$elm$html$Html$text('登録する')
 									]))
-							])),
-						A2(
-						$elm$html$Html$div,
-						_List_fromArray(
-							[
-								$elm$html$Html$Attributes$class('space-y-2')
-							]),
-						_List_fromArray(
-							[
-								A2(
-								$elm$html$Html$label,
-								_List_fromArray(
-									[
-										$elm$html$Html$Attributes$class('block text-sm font-medium text-gray-700')
-									]),
-								_List_fromArray(
-									[
-										$elm$html$Html$text('ユーザ名（源氏名）')
-									])),
-								A2(
-								$elm$html$Html$input,
-								_List_fromArray(
-									[
-										$elm$html$Html$Attributes$type_('text'),
-										$elm$html$Html$Attributes$placeholder('例: さくら'),
-										$elm$html$Html$Attributes$value(usernameInput),
-										$elm$html$Html$Events$onInput($author$project$Main$ChangeUsernameInput),
-										$elm$html$Html$Attributes$class('w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent')
-									]),
-								_List_Nil)
-							])),
-						A2(
-						$elm$html$Html$button,
-						_List_fromArray(
-							[
-								$elm$html$Html$Attributes$type_('submit'),
-								$elm$html$Html$Attributes$class('w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed'),
-								$elm$html$Html$Attributes$disabled(
-								$elm$core$String$trim(usernameInput) === '')
-							]),
-						_List_fromArray(
-							[
-								$elm$html$Html$text('登録する')
 							]))
 					]))
 			]));
 };
-var $elm$html$Html$h3 = _VirtualDom_node('h3');
-var $author$project$Main$viewConfirmedShift = function (shifts) {
-	return A2(
-		$elm$html$Html$div,
-		_List_fromArray(
-			[
-				$elm$html$Html$Attributes$class('space-y-6')
-			]),
-		_List_fromArray(
-			[
-				A2(
-				$elm$html$Html$div,
-				_List_fromArray(
-					[
-						$elm$html$Html$Attributes$class('bg-green-50 border border-green-200 rounded-lg px-4 py-3')
-					]),
-				_List_fromArray(
-					[
-						A2(
-						$elm$html$Html$p,
-						_List_fromArray(
-							[
-								$elm$html$Html$Attributes$class('text-green-800 font-semibold')
-							]),
-						_List_fromArray(
-							[
-								$elm$html$Html$text('✓ 来週のシフトが確定しました！')
-							]))
-					])),
-				A2(
-				$elm$html$Html$h3,
-				_List_fromArray(
-					[
-						$elm$html$Html$Attributes$class('text-lg font-semibold text-gray-700')
-					]),
-				_List_fromArray(
-					[
-						$elm$html$Html$text('確定シフト:')
-					])),
-				A2(
-				$elm$html$Html$div,
-				_List_fromArray(
-					[
-						$elm$html$Html$Attributes$class('bg-white border-2 border-green-300 rounded-lg divide-y divide-gray-200')
-					]),
-				$elm$core$List$isEmpty(shifts) ? _List_fromArray(
-					[
-						A2(
-						$elm$html$Html$div,
-						_List_fromArray(
-							[
-								$elm$html$Html$Attributes$class('px-4 py-3 text-gray-500 text-center')
-							]),
-						_List_fromArray(
-							[
-								$elm$html$Html$text('出勤なし')
-							]))
-					]) : A2($elm$core$List$map, $author$project$Main$viewShiftRow, shifts))
-			]));
-};
-var $author$project$Main$viewPendingShift = function (shifts) {
-	return A2(
-		$elm$html$Html$div,
-		_List_fromArray(
-			[
-				$elm$html$Html$Attributes$class('space-y-6')
-			]),
-		_List_fromArray(
-			[
-				A2(
-				$elm$html$Html$div,
-				_List_fromArray(
-					[
-						$elm$html$Html$Attributes$class('bg-blue-50 border border-blue-200 rounded-lg px-4 py-3')
-					]),
-				_List_fromArray(
-					[
-						A2(
-						$elm$html$Html$p,
-						_List_fromArray(
-							[
-								$elm$html$Html$Attributes$class('text-blue-800')
-							]),
-						_List_fromArray(
-							[
-								$elm$html$Html$text('⏳ 管理者によるシフト確定をお待ちください')
-							]))
-					])),
-				A2(
-				$elm$html$Html$h3,
-				_List_fromArray(
-					[
-						$elm$html$Html$Attributes$class('text-lg font-semibold text-gray-700')
-					]),
-				_List_fromArray(
-					[
-						$elm$html$Html$text('提出したシフト希望:')
-					])),
-				A2(
-				$elm$html$Html$div,
-				_List_fromArray(
-					[
-						$elm$html$Html$Attributes$class('bg-gray-50 border border-gray-200 rounded-lg divide-y divide-gray-200')
-					]),
-				$elm$core$List$isEmpty(shifts) ? _List_fromArray(
-					[
-						A2(
-						$elm$html$Html$div,
-						_List_fromArray(
-							[
-								$elm$html$Html$Attributes$class('px-4 py-3 text-gray-500 text-center')
-							]),
-						_List_fromArray(
-							[
-								$elm$html$Html$text('シフト希望なし')
-							]))
-					]) : A2($elm$core$List$map, $author$project$Main$viewShiftRow, shifts))
-			]));
-};
 var $author$project$Main$SubmitShifts = {$: 'SubmitShifts'};
-var $author$project$Main$UpdateShiftAvailability = F2(
-	function (a, b) {
-		return {$: 'UpdateShiftAvailability', a: a, b: b};
-	});
 var $author$project$Main$UpdateShiftEndTime = F2(
 	function (a, b) {
 		return {$: 'UpdateShiftEndTime', a: a, b: b};
+	});
+var $author$project$Main$UpdateShiftExitByEndTime = F2(
+	function (a, b) {
+		return {$: 'UpdateShiftExitByEndTime', a: a, b: b};
 	});
 var $author$project$Main$UpdateShiftStartTime = F2(
 	function (a, b) {
 		return {$: 'UpdateShiftStartTime', a: a, b: b};
 	});
 var $elm$html$Html$Attributes$checked = $elm$html$Html$Attributes$boolProperty('checked');
-var $elm$html$Html$Attributes$name = $elm$html$Html$Attributes$stringProperty('name');
-var $author$project$Main$viewShiftInputRow = function (shiftinput) {
+var $author$project$Main$UpdateShiftAvailability = F2(
+	function (a, b) {
+		return {$: 'UpdateShiftAvailability', a: a, b: b};
+	});
+var $author$project$Main$viewSegmentBtn = F4(
+	function (date, val, labelText, isChecked) {
+		return A2(
+			$elm$html$Html$button,
+			_List_fromArray(
+				[
+					$elm$html$Html$Events$onClick(
+					A2($author$project$Main$UpdateShiftAvailability, date, val)),
+					$elm$html$Html$Attributes$class(
+					'px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 ' + (isChecked ? 'bg-white text-blue-600 shadow-sm scale-100' : 'text-gray-500 hover:text-gray-700 scale-95 opacity-70'))
+				]),
+			_List_fromArray(
+				[
+					$elm$html$Html$text(labelText)
+				]));
+	});
+var $author$project$Main$viewShiftInputRow = function (shiftInput) {
 	return A2(
 		$elm$html$Html$div,
 		_List_fromArray(
 			[
-				$elm$html$Html$Attributes$class('bg-gray-50 rounded-lg p-4 space-y-3')
+				$elm$html$Html$Attributes$class('bg-white rounded-2xl p-5 shadow-sm border border-gray-100')
 			]),
 		_List_fromArray(
 			[
@@ -6662,7 +6757,7 @@ var $author$project$Main$viewShiftInputRow = function (shiftinput) {
 				$elm$html$Html$div,
 				_List_fromArray(
 					[
-						$elm$html$Html$Attributes$class('flex items-center justify-between')
+						$elm$html$Html$Attributes$class('flex justify-between items-center mb-4')
 					]),
 				_List_fromArray(
 					[
@@ -6670,237 +6765,142 @@ var $author$project$Main$viewShiftInputRow = function (shiftinput) {
 						$elm$html$Html$label,
 						_List_fromArray(
 							[
-								$elm$html$Html$Attributes$class('font-semibold text-gray-900')
+								$elm$html$Html$Attributes$class('text-lg font-bold text-gray-800')
 							]),
 						_List_fromArray(
 							[
 								$elm$html$Html$text(
-								$author$project$Main$formatDateWithWeekday(shiftinput.date))
+								$author$project$Main$formatDateWithWeekday(shiftInput.date))
 							])),
 						A2(
 						$elm$html$Html$div,
 						_List_fromArray(
 							[
-								$elm$html$Html$Attributes$class('flex gap-4')
+								$elm$html$Html$Attributes$class('flex bg-gray-100 p-1 rounded-xl')
 							]),
 						_List_fromArray(
 							[
-								A2(
-								$elm$html$Html$label,
-								_List_fromArray(
-									[
-										$elm$html$Html$Attributes$class('flex items-center cursor-pointer')
-									]),
-								_List_fromArray(
-									[
-										A2(
-										$elm$html$Html$input,
-										_List_fromArray(
-											[
-												$elm$html$Html$Attributes$type_('radio'),
-												$elm$html$Html$Attributes$name('availability-' + shiftinput.date),
-												$elm$html$Html$Attributes$checked(shiftinput.isAvailable),
-												$elm$html$Html$Events$onClick(
-												A2($author$project$Main$UpdateShiftAvailability, shiftinput.date, true)),
-												$elm$html$Html$Attributes$class('mr-2 w-4 h-4 text-blue-600')
-											]),
-										_List_Nil),
-										A2(
-										$elm$html$Html$span,
-										_List_fromArray(
-											[
-												$elm$html$Html$Attributes$class('text-sm font-medium text-gray-700')
-											]),
-										_List_fromArray(
-											[
-												$elm$html$Html$text('出勤可')
-											]))
-									])),
-								A2(
-								$elm$html$Html$label,
-								_List_fromArray(
-									[
-										$elm$html$Html$Attributes$class('flex items-center cursor-pointer')
-									]),
-								_List_fromArray(
-									[
-										A2(
-										$elm$html$Html$input,
-										_List_fromArray(
-											[
-												$elm$html$Html$Attributes$type_('radio'),
-												$elm$html$Html$Attributes$name('availability-' + shiftinput.date),
-												$elm$html$Html$Attributes$checked(!shiftinput.isAvailable),
-												$elm$html$Html$Events$onClick(
-												A2($author$project$Main$UpdateShiftAvailability, shiftinput.date, false)),
-												$elm$html$Html$Attributes$class('mr-2 w-4 h-4 text-blue-600')
-											]),
-										_List_Nil),
-										A2(
-										$elm$html$Html$span,
-										_List_fromArray(
-											[
-												$elm$html$Html$Attributes$class('text-sm font-medium text-gray-700')
-											]),
-										_List_fromArray(
-											[
-												$elm$html$Html$text('出勤不可')
-											]))
-									]))
+								A4($author$project$Main$viewSegmentBtn, shiftInput.date, true, '出勤', shiftInput.isAvailable),
+								A4($author$project$Main$viewSegmentBtn, shiftInput.date, false, '休み', !shiftInput.isAvailable)
 							]))
 					])),
-				shiftinput.isAvailable ? A2(
+				shiftInput.isAvailable ? A2(
 				$elm$html$Html$div,
 				_List_fromArray(
 					[
-						$elm$html$Html$Attributes$class('flex gap-3 items-center')
+						$elm$html$Html$Attributes$class('space-y-4 animate-in fade-in slide-in-from-top-2 duration-200')
 					]),
 				_List_fromArray(
 					[
 						A2(
-						$elm$html$Html$input,
+						$elm$html$Html$div,
 						_List_fromArray(
 							[
-								$elm$html$Html$Attributes$type_('time'),
-								$elm$html$Html$Attributes$value(shiftinput.startTime),
-								$elm$html$Html$Events$onInput(
-								$author$project$Main$UpdateShiftStartTime(shiftinput.date)),
-								$elm$html$Html$Attributes$class('px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500')
-							]),
-						_List_Nil),
-						A2(
-						$elm$html$Html$span,
-						_List_fromArray(
-							[
-								$elm$html$Html$Attributes$class('text-gray-500 font-medium')
+								$elm$html$Html$Attributes$class('flex items-center gap-2')
 							]),
 						_List_fromArray(
 							[
-								$elm$html$Html$text('〜')
+								A2(
+								$elm$html$Html$input,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$type_('time'),
+										$elm$html$Html$Attributes$value(shiftInput.startTime),
+										$elm$html$Html$Events$onInput(
+										$author$project$Main$UpdateShiftStartTime(shiftInput.date)),
+										$elm$html$Html$Attributes$class('flex-1 h-14 px-3 text-center bg-gray-50 border border-gray-200 rounded-xl text-lg font-medium focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none')
+									]),
+								_List_Nil),
+								A2(
+								$elm$html$Html$span,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('text-gray-300 font-bold')
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text('～')
+									])),
+								A2(
+								$elm$html$Html$input,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$type_('time'),
+										$elm$html$Html$Attributes$value(shiftInput.endTime),
+										$elm$html$Html$Events$onInput(
+										$author$project$Main$UpdateShiftEndTime(shiftInput.date)),
+										$elm$html$Html$Attributes$class('flex-1 h-14 px-3 text-center bg-gray-50 border border-gray-200 rounded-xl text-lg font-medium focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none')
+									]),
+								_List_Nil)
 							])),
 						A2(
-						$elm$html$Html$input,
+						$elm$html$Html$label,
 						_List_fromArray(
 							[
-								$elm$html$Html$Attributes$type_('time'),
-								$elm$html$Html$Attributes$value(shiftinput.endTime),
-								$elm$html$Html$Events$onInput(
-								$author$project$Main$UpdateShiftEndTime(shiftinput.date)),
-								$elm$html$Html$Attributes$class('px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500')
+								$elm$html$Html$Attributes$class('flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition cursor-pointer select-none')
 							]),
-						_List_Nil)
-					])) : $elm$html$Html$text('')
+						_List_fromArray(
+							[
+								A2(
+								$elm$html$Html$div,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('relative flex items-center')
+									]),
+								_List_fromArray(
+									[
+										A2(
+										$elm$html$Html$input,
+										_List_fromArray(
+											[
+												$elm$html$Html$Attributes$type_('checkbox'),
+												$elm$html$Html$Attributes$checked(shiftInput.exitByEndTime),
+												$elm$html$Html$Events$onClick(
+												A2($author$project$Main$UpdateShiftExitByEndTime, shiftInput.date, !shiftInput.exitByEndTime)),
+												$elm$html$Html$Attributes$class('peer h-6 w-6 cursor-pointer appearance-none rounded-lg border-2 border-gray-300 transition-all checked:border-blue-500 checked:bg-blue-500')
+											]),
+										_List_Nil),
+										A2(
+										$elm$html$Html$div,
+										_List_fromArray(
+											[
+												$elm$html$Html$Attributes$class('pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 peer-checked:opacity-100')
+											]),
+										_List_fromArray(
+											[
+												$elm$html$Html$text('✓')
+											]))
+									])),
+								A2(
+								$elm$html$Html$span,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('text-sm font-bold text-gray-700')
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text('ラストまで（閉店作業含む）')
+									]))
+							]))
+					])) : A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$class('py-4 flex justify-center items-center text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-200')
+					]),
+				_List_fromArray(
+					[
+						$elm$html$Html$text('✕ 休み希望')
+					]))
 			]));
 };
-var $author$project$Main$viewSubmittedShift = F3(
-	function (_v0, shiftInputs, isSubmitting) {
-		return A2(
-			$elm$html$Html$div,
-			_List_fromArray(
-				[
-					$elm$html$Html$Attributes$class('space-y-6')
-				]),
-			_List_fromArray(
-				[
-					A2(
-					$elm$html$Html$div,
-					_List_fromArray(
-						[
-							$elm$html$Html$Attributes$class('bg-green-50 border border-green-200 rounded-lg px-4 py-3')
-						]),
-					_List_fromArray(
-						[
-							A2(
-							$elm$html$Html$p,
-							_List_fromArray(
-								[
-									$elm$html$Html$Attributes$class('text-green-800 text-sm font-medium')
-								]),
-							_List_fromArray(
-								[
-									$elm$html$Html$text('✓ シフト希望は提出済みです（修正可能）')
-								]))
-						])),
-					A2(
-					$elm$html$Html$div,
-					_List_fromArray(
-						[
-							$elm$html$Html$Attributes$class('space-y-3')
-						]),
-					A2($elm$core$List$map, $author$project$Main$viewShiftInputRow, shiftInputs)),
-					A2(
-					$elm$html$Html$button,
-					_List_fromArray(
-						[
-							$elm$html$Html$Events$onClick($author$project$Main$SubmitShifts),
-							$elm$html$Html$Attributes$disabled(isSubmitting),
-							$elm$html$Html$Attributes$class('w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed')
-						]),
-					_List_fromArray(
-						[
-							$elm$html$Html$text(
-							isSubmitting ? '更新中...' : 'シフトを更新する')
-						]))
-				]));
-	});
-var $author$project$Main$viewUnsubmittedShift = F2(
-	function (shiftInputs, isSubmitting) {
-		return A2(
-			$elm$html$Html$div,
-			_List_fromArray(
-				[
-					$elm$html$Html$Attributes$class('space-y-6')
-				]),
-			_List_fromArray(
-				[
-					A2(
-					$elm$html$Html$div,
-					_List_fromArray(
-						[
-							$elm$html$Html$Attributes$class('bg-blue-50 border border-blue-200 rounded-lg px-4 py-3')
-						]),
-					_List_fromArray(
-						[
-							A2(
-							$elm$html$Html$p,
-							_List_fromArray(
-								[
-									$elm$html$Html$Attributes$class('text-blue-800 text-sm')
-								]),
-							_List_fromArray(
-								[
-									$elm$html$Html$text('📝 来週のシフト希望を入力してください')
-								]))
-						])),
-					A2(
-					$elm$html$Html$div,
-					_List_fromArray(
-						[
-							$elm$html$Html$Attributes$class('space-y-3')
-						]),
-					A2($elm$core$List$map, $author$project$Main$viewShiftInputRow, shiftInputs)),
-					A2(
-					$elm$html$Html$button,
-					_List_fromArray(
-						[
-							$elm$html$Html$Events$onClick($author$project$Main$SubmitShifts),
-							$elm$html$Html$Attributes$disabled(isSubmitting),
-							$elm$html$Html$Attributes$class('w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed')
-						]),
-					_List_fromArray(
-						[
-							$elm$html$Html$text(
-							isSubmitting ? '送信中...' : 'シフトを提出する')
-						]))
-				]));
-	});
 var $author$project$Main$viewShiftPage = F4(
 	function (data, shiftState, shiftInputs, isSubmitting) {
 		return A2(
 			$elm$html$Html$div,
 			_List_fromArray(
 				[
-					$elm$html$Html$Attributes$class('w-full max-w-3xl')
+					$elm$html$Html$Attributes$class('max-w-md mx-auto w-full pb-24')
 				]),
 			_List_fromArray(
 				[
@@ -6908,71 +6908,256 @@ var $author$project$Main$viewShiftPage = F4(
 					$elm$html$Html$div,
 					_List_fromArray(
 						[
-							$elm$html$Html$Attributes$class('bg-white shadow-lg rounded-lg overflow-hidden')
+							$elm$html$Html$Attributes$class('sticky top-0 z-10 bg-white/90 backdrop-blur-md border-b border-gray-100 px-4 h-14 flex items-center justify-between')
 						]),
 					_List_fromArray(
 						[
 							A2(
-							$elm$html$Html$div,
+							$elm$html$Html$button,
 							_List_fromArray(
 								[
-									$elm$html$Html$Attributes$class('bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4')
+									$elm$html$Html$Events$onClick($author$project$Main$TogglePage),
+									$elm$html$Html$Attributes$class('text-gray-500 hover:bg-gray-100 p-2 rounded-full')
 								]),
 							_List_fromArray(
 								[
-									A2(
-									$elm$html$Html$div,
-									_List_fromArray(
-										[
-											$elm$html$Html$Attributes$class('flex justify-between items-center')
-										]),
-									_List_fromArray(
-										[
-											A2(
-											$elm$html$Html$h2,
-											_List_fromArray(
-												[
-													$elm$html$Html$Attributes$class('text-2xl font-bold text-white')
-												]),
-											_List_fromArray(
-												[
-													$elm$html$Html$text('来週のシフト希望')
-												])),
-											A2(
-											$elm$html$Html$button,
-											_List_fromArray(
-												[
-													$elm$html$Html$Events$onClick($author$project$Main$TogglePage),
-													$elm$html$Html$Attributes$class('text-white hover:text-blue-100 font-medium')
-												]),
-											_List_fromArray(
-												[
-													$elm$html$Html$text('← ホームに戻る')
-												]))
-										]))
+									$elm$html$Html$text('✕ 閉じる')
+								])),
+							A2(
+							$elm$html$Html$h2,
+							_List_fromArray(
+								[
+									$elm$html$Html$Attributes$class('font-bold text-gray-800')
+								]),
+							_List_fromArray(
+								[
+									$elm$html$Html$text('来週のシフト')
 								])),
 							A2(
 							$elm$html$Html$div,
 							_List_fromArray(
 								[
-									$elm$html$Html$Attributes$class('p-6')
+									$elm$html$Html$Attributes$class('w-8')
 								]),
-							_List_fromArray(
-								[
-									function () {
-									switch (shiftState.$) {
-										case 'Unsubmitted':
-											return A2($author$project$Main$viewUnsubmittedShift, shiftInputs, isSubmitting);
-										case 'Submitted':
-											return A3($author$project$Main$viewSubmittedShift, data.nextWeekShifts, shiftInputs, isSubmitting);
-										case 'Pending':
-											return $author$project$Main$viewPendingShift(data.nextWeekShifts);
-										default:
-											return $author$project$Main$viewConfirmedShift(data.nextWeekShifts);
-									}
-								}()
-								]))
-						]))
+							_List_Nil)
+						])),
+					A2(
+					$elm$html$Html$div,
+					_List_fromArray(
+						[
+							$elm$html$Html$Attributes$class('p-4 space-y-4')
+						]),
+					_List_fromArray(
+						[
+							function () {
+							switch (shiftState.$) {
+								case 'Unsubmitted':
+									return A2(
+										$elm$html$Html$div,
+										_List_fromArray(
+											[
+												$elm$html$Html$Attributes$class('bg-blue-50 border border-blue-100 rounded-2xl p-4 flex gap-3')
+											]),
+										_List_fromArray(
+											[
+												A2(
+												$elm$html$Html$div,
+												_List_fromArray(
+													[
+														$elm$html$Html$Attributes$class('text-xl')
+													]),
+												_List_fromArray(
+													[
+														$elm$html$Html$text('✏️')
+													])),
+												A2(
+												$elm$html$Html$div,
+												_List_fromArray(
+													[
+														$elm$html$Html$Attributes$class('text-sm text-blue-800')
+													]),
+												_List_fromArray(
+													[
+														$elm$html$Html$text('希望を入力して、画面下の「提出する」ボタンを押してください。')
+													]))
+											]));
+								case 'Submitted':
+									return A2(
+										$elm$html$Html$div,
+										_List_fromArray(
+											[
+												$elm$html$Html$Attributes$class('bg-green-50 border border-green-100 rounded-2xl p-4 flex gap-3')
+											]),
+										_List_fromArray(
+											[
+												A2(
+												$elm$html$Html$div,
+												_List_fromArray(
+													[
+														$elm$html$Html$Attributes$class('text-xl')
+													]),
+												_List_fromArray(
+													[
+														$elm$html$Html$text('✅')
+													])),
+												A2(
+												$elm$html$Html$div,
+												_List_fromArray(
+													[
+														$elm$html$Html$Attributes$class('text-sm text-green-800')
+													]),
+												_List_fromArray(
+													[
+														$elm$html$Html$text('提出済みです。期間中（月〜水）は何度でも修正可能です。')
+													]))
+											]));
+								case 'Pending':
+									return A2(
+										$elm$html$Html$div,
+										_List_fromArray(
+											[
+												$elm$html$Html$Attributes$class('bg-gray-100 border border-gray-200 rounded-2xl p-4 text-center')
+											]),
+										_List_fromArray(
+											[
+												A2(
+												$elm$html$Html$h3,
+												_List_fromArray(
+													[
+														$elm$html$Html$Attributes$class('font-bold text-gray-700 mb-1')
+													]),
+												_List_fromArray(
+													[
+														$elm$html$Html$text('現在は変更期間外です')
+													])),
+												A2(
+												$elm$html$Html$p,
+												_List_fromArray(
+													[
+														$elm$html$Html$Attributes$class('text-xs text-gray-500')
+													]),
+												_List_fromArray(
+													[
+														$elm$html$Html$text('管理者の確定をお待ちください')
+													]))
+											]));
+								default:
+									return A2(
+										$elm$html$Html$div,
+										_List_fromArray(
+											[
+												$elm$html$Html$Attributes$class('bg-emerald-50 border border-emerald-100 rounded-2xl p-4 text-center')
+											]),
+										_List_fromArray(
+											[
+												A2(
+												$elm$html$Html$h3,
+												_List_fromArray(
+													[
+														$elm$html$Html$Attributes$class('font-bold text-emerald-800 mb-1')
+													]),
+												_List_fromArray(
+													[
+														$elm$html$Html$text('来週のシフトが確定しました！')
+													])),
+												A2(
+												$elm$html$Html$p,
+												_List_fromArray(
+													[
+														$elm$html$Html$Attributes$class('text-xs text-emerald-600')
+													]),
+												_List_fromArray(
+													[
+														$elm$html$Html$text('出勤日を確認してください')
+													]))
+											]));
+							}
+						}(),
+							function () {
+							switch (shiftState.$) {
+								case 'Confirmed':
+									return $elm$core$List$isEmpty(data.nextWeekConfirmedShifts) ? A2(
+										$elm$html$Html$div,
+										_List_fromArray(
+											[
+												$elm$html$Html$Attributes$class('text-center text-gray-500 py-8')
+											]),
+										_List_fromArray(
+											[
+												$elm$html$Html$text('来週の出勤はありません')
+											])) : A2(
+										$elm$html$Html$div,
+										_List_fromArray(
+											[
+												$elm$html$Html$Attributes$class('space-y-3')
+											]),
+										A2($elm$core$List$map, $author$project$Main$viewConfirmedShiftCard, data.nextWeekConfirmedShifts));
+								case 'Pending':
+									return A2(
+										$elm$html$Html$div,
+										_List_fromArray(
+											[
+												$elm$html$Html$Attributes$class('space-y-3 opacity-80 pointer-events-none grayscale')
+											]),
+										A2($elm$core$List$map, $author$project$Main$viewShiftInputRow, shiftInputs));
+								default:
+									return A2(
+										$elm$html$Html$div,
+										_List_fromArray(
+											[
+												$elm$html$Html$Attributes$class('space-y-4')
+											]),
+										A2($elm$core$List$map, $author$project$Main$viewShiftInputRow, shiftInputs));
+							}
+						}()
+						])),
+					function () {
+					switch (shiftState.$) {
+						case 'Pending':
+							return $elm$html$Html$text('');
+						case 'Confirmed':
+							return $elm$html$Html$text('');
+						default:
+							return A2(
+								$elm$html$Html$div,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 safe-area-bottom')
+									]),
+								_List_fromArray(
+									[
+										A2(
+										$elm$html$Html$div,
+										_List_fromArray(
+											[
+												$elm$html$Html$Attributes$class('max-w-md mx-auto')
+											]),
+										_List_fromArray(
+											[
+												A2(
+												$elm$html$Html$button,
+												_List_fromArray(
+													[
+														$elm$html$Html$Events$onClick($author$project$Main$SubmitShifts),
+														$elm$html$Html$Attributes$disabled(isSubmitting),
+														$elm$html$Html$Attributes$class('w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl shadow-lg transition flex justify-center items-center disabled:opacity-70')
+													]),
+												_List_fromArray(
+													[
+														isSubmitting ? A2(
+														$elm$html$Html$div,
+														_List_fromArray(
+															[
+																$elm$html$Html$Attributes$class('animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-2')
+															]),
+														_List_Nil) : $elm$html$Html$text(''),
+														$elm$html$Html$text(
+														isSubmitting ? '送信中...' : 'この内容で提出する')
+													]))
+											]))
+									]));
+					}
+				}()
 				]));
 	});
 var $author$project$Main$view = function (model) {
@@ -6980,30 +7165,20 @@ var $author$project$Main$view = function (model) {
 		$elm$html$Html$div,
 		_List_fromArray(
 			[
-				$elm$html$Html$Attributes$class('min-h-screen bg-gray-50 flex items-center justify-center p-4')
+				$elm$html$Html$Attributes$class('min-h-screen bg-gray-50 text-gray-800 font-sans pb-10 safe-area-padding')
 			]),
 		_List_fromArray(
 			[
 				function () {
 				var _v0 = model.appState;
 				if (_v0.$ === 'Loading') {
-					return A2(
-						$elm$html$Html$div,
-						_List_fromArray(
-							[
-								$elm$html$Html$Attributes$class('text-gray-500 animate-pulse')
-							]),
-						_List_fromArray(
-							[
-								$elm$html$Html$text(
-								A2($elm$core$Maybe$withDefault, '認証中...', model.error))
-							]));
+					return $author$project$Main$viewLoading(model.error);
 				} else {
 					var data = _v0.a;
 					var page = _v0.b;
 					switch (page.$) {
 						case 'Home':
-							return $author$project$Main$viewHome(data);
+							return A2($author$project$Main$viewHome, data, model.showMonToWed);
 						case 'Register':
 							var usernameInput = page.a;
 							return $author$project$Main$viewRegister(usernameInput);
