@@ -5835,6 +5835,7 @@ var $author$project$Main$scheduleNextJstMidnight = function (now) {
 	var h = A2($elm$time$Time$toHour, $author$project$Main$jst, now);
 	var millisPassed = (((((h * 60) + m) * 60) + s) * 1000) + ms;
 	var rem = millisPerDay - millisPassed;
+	var safeDelay = rem + 2000;
 	return A2(
 		$elm$core$Task$perform,
 		$author$project$Main$GotNow,
@@ -5843,8 +5844,7 @@ var $author$project$Main$scheduleNextJstMidnight = function (now) {
 			function (_v0) {
 				return $elm$time$Time$now;
 			},
-			$elm$core$Process$sleep(
-				(!rem) ? millisPerDay : rem)));
+			$elm$core$Process$sleep(safeDelay)));
 };
 var $author$project$Main$setAuthenticated = F2(
 	function (data, model) {
