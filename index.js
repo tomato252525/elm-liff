@@ -7,6 +7,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
   const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4cHlldnR0a3Z5Y2l2dnZxeWNsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMzNzYzNTQsImV4cCI6MjA3ODk1MjM1NH0.oJL3eCCwqJ1TK6ysJkllqYVrm2NhZmo-lMCdUm3_840'
 
   let db = null;
+  let currentUserId = null; // ユーザーIDを保持
 
   // ---------------------------------------------------------
   // 日付計算ユーティリティ
@@ -110,6 +111,23 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
         typeof e === 'string' ? e : e?.message || 'Unknown error'
       );
     };
+
+    // ----------------------------------
+    // Port: データ再取得リクエスト（日付変更時用）
+    // ----------------------------------
+    app.ports.refreshDataRequest?.subscribe(async () => {
+      if (!db || !currentUserId) {
+        sendError('DB client or user ID is not available');
+        return;
+      }
+
+      try {
+        const result = await fetchUserAndShifts(currentUserId);
+        app.ports.refreshDataResponse?.send(result);
+      } catch (e) {
+        sendError(e);
+      }
+    });
 
     // ----------------------------------
     // Port: ユーザ名登録処理
@@ -262,6 +280,9 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
           });
 
           if (user && token) {
+            // ユーザーIDを保持
+            currentUserId = user.id;
+            
             // 初期データを取得してElmへ送信
             const data = await fetchUserAndShifts(user.id);
             app.ports.deliverVerificationResult.send(data);

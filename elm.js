@@ -5271,20 +5271,18 @@ var $author$project$Main$init = function (_v0) {
 		{appState: $author$project$Main$Loading, error: $elm$core$Maybe$Nothing, isSubmitting: false, shiftInputs: _List_Nil, showMonToWed: $elm$core$Maybe$Nothing},
 		A2($elm$core$Task$perform, $author$project$Main$GotNow, $elm$time$Time$now));
 };
+var $author$project$Main$DataRefreshed = function (a) {
+	return {$: 'DataRefreshed', a: a};
+};
 var $author$project$Main$GotError = function (a) {
 	return {$: 'GotError', a: a};
 };
 var $elm$core$Platform$Sub$batch = _Platform_batch;
-var $elm$json$Json$Decode$string = _Json_decodeString;
-var $author$project$Main$deliverError = _Platform_incomingPort('deliverError', $elm$json$Json$Decode$string);
-var $elm$json$Json$Decode$value = _Json_decodeValue;
-var $author$project$Main$deliverVerificationResult = _Platform_incomingPort('deliverVerificationResult', $elm$json$Json$Decode$value);
-var $author$project$Main$ShiftSubmitted = function (a) {
-	return {$: 'ShiftSubmitted', a: a};
-};
-var $author$project$Main$UserArrived = function (a) {
-	return {$: 'UserArrived', a: a};
-};
+var $elm$core$Basics$composeR = F3(
+	function (f, g, x) {
+		return g(
+			f(x));
+	});
 var $author$project$Main$Data = F6(
 	function (user, currentWeekStartDate, currentWeekShifts, nextWeekStartDate, nextWeekShifts, nextWeekConfirmedShifts) {
 		return {currentWeekShifts: currentWeekShifts, currentWeekStartDate: currentWeekStartDate, nextWeekConfirmedShifts: nextWeekConfirmedShifts, nextWeekShifts: nextWeekShifts, nextWeekStartDate: nextWeekStartDate, user: user};
@@ -5306,6 +5304,7 @@ var $elm$json$Json$Decode$nullable = function (decoder) {
 				A2($elm$json$Json$Decode$map, $elm$core$Maybe$Just, decoder)
 			]));
 };
+var $elm$json$Json$Decode$string = _Json_decodeString;
 var $elm$core$Maybe$withDefault = F2(
 	function (_default, maybe) {
 		if (maybe.$ === 'Just') {
@@ -5393,6 +5392,15 @@ var $author$project$Main$dataDecoder = A7(
 		'next_week_confirmed_shifts',
 		$elm$json$Json$Decode$list($author$project$Main$confirmedShiftDecoder)));
 var $elm$json$Json$Decode$decodeValue = _Json_run;
+var $author$project$Main$deliverError = _Platform_incomingPort('deliverError', $elm$json$Json$Decode$string);
+var $elm$json$Json$Decode$value = _Json_decodeValue;
+var $author$project$Main$deliverVerificationResult = _Platform_incomingPort('deliverVerificationResult', $elm$json$Json$Decode$value);
+var $author$project$Main$ShiftSubmitted = function (a) {
+	return {$: 'ShiftSubmitted', a: a};
+};
+var $author$project$Main$UserArrived = function (a) {
+	return {$: 'UserArrived', a: a};
+};
 var $author$project$Main$fromDataPayload = F2(
 	function (source, value) {
 		var _v0 = A2($elm$json$Json$Decode$decodeValue, $author$project$Main$dataDecoder, value);
@@ -5409,8 +5417,29 @@ var $author$project$Main$fromDataPayload = F2(
 				'Decode error in ' + (source + (': ' + $elm$json$Json$Decode$errorToString(err))));
 		}
 	});
+var $elm$core$Result$map = F2(
+	function (func, ra) {
+		if (ra.$ === 'Ok') {
+			var a = ra.a;
+			return $elm$core$Result$Ok(
+				func(a));
+		} else {
+			var e = ra.a;
+			return $elm$core$Result$Err(e);
+		}
+	});
+var $author$project$Main$refreshDataResponse = _Platform_incomingPort('refreshDataResponse', $elm$json$Json$Decode$value);
 var $author$project$Main$shiftSubmitResponse = _Platform_incomingPort('shiftSubmitResponse', $elm$json$Json$Decode$value);
 var $author$project$Main$usernameRegistrationResponse = _Platform_incomingPort('usernameRegistrationResponse', $elm$json$Json$Decode$value);
+var $elm$core$Result$withDefault = F2(
+	function (def, result) {
+		if (result.$ === 'Ok') {
+			var a = result.a;
+			return a;
+		} else {
+			return def;
+		}
+	});
 var $author$project$Main$subscriptions = function (_v0) {
 	return $elm$core$Platform$Sub$batch(
 		_List_fromArray(
@@ -5421,6 +5450,15 @@ var $author$project$Main$subscriptions = function (_v0) {
 				$author$project$Main$fromDataPayload('usernameRegistrationResponse')),
 				$author$project$Main$shiftSubmitResponse(
 				$author$project$Main$fromDataPayload('shiftSubmitResponse')),
+				$author$project$Main$refreshDataResponse(
+				A2(
+					$elm$core$Basics$composeR,
+					$elm$json$Json$Decode$decodeValue($author$project$Main$dataDecoder),
+					A2(
+						$elm$core$Basics$composeR,
+						$elm$core$Result$map($author$project$Main$DataRefreshed),
+						$elm$core$Result$withDefault(
+							$author$project$Main$GotError('データ更新のデコードに失敗しました'))))),
 				$author$project$Main$deliverError($author$project$Main$GotError)
 			]));
 };
@@ -5439,6 +5477,7 @@ var $author$project$Main$Register = function (a) {
 };
 var $author$project$Main$Submitted = {$: 'Submitted'};
 var $author$project$Main$Unsubmitted = {$: 'Unsubmitted'};
+var $elm$core$Platform$Cmd$batch = _Platform_batch;
 var $elm$json$Json$Encode$bool = _Json_wrap;
 var $elm$core$Basics$neq = _Utils_notEqual;
 var $elm$json$Json$Encode$null = _Json_encodeNull;
@@ -5750,9 +5789,13 @@ var $author$project$Main$isMonToWed = function (now) {
 			return false;
 	}
 };
-var $elm$core$Platform$Cmd$batch = _Platform_batch;
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
 var $elm$core$Basics$not = _Basics_not;
+var $author$project$Main$refreshDataRequest = _Platform_outgoingPort(
+	'refreshDataRequest',
+	function ($) {
+		return $elm$json$Json$Encode$null;
+	});
 var $elm$core$Process$sleep = _Process_sleep;
 var $elm$time$Time$toHour = F2(
 	function (zone, time) {
@@ -5870,12 +5913,34 @@ var $author$project$Main$update = F2(
 						{
 							showMonToWed: $elm$core$Maybe$Just(isMonWed)
 						}),
-					$author$project$Main$scheduleNextJstMidnight(now));
+					$elm$core$Platform$Cmd$batch(
+						_List_fromArray(
+							[
+								$author$project$Main$scheduleNextJstMidnight(now),
+								$author$project$Main$refreshDataRequest(_Utils_Tuple0)
+							])));
 			case 'UserArrived':
 				var data = msg.a;
 				return _Utils_Tuple2(
 					A2($author$project$Main$setAuthenticated, data, model),
 					$elm$core$Platform$Cmd$none);
+			case 'DataRefreshed':
+				var data = msg.a;
+				var _v1 = model.appState;
+				if (_v1.$ === 'Authenticated') {
+					var currentPage = _v1.b;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								appState: A2($author$project$Main$Authenticated, data, currentPage)
+							}),
+						$elm$core$Platform$Cmd$none);
+				} else {
+					return _Utils_Tuple2(
+						A2($author$project$Main$setAuthenticated, data, model),
+						$elm$core$Platform$Cmd$none);
+				}
 			case 'GotError':
 				var e = msg.a;
 				return _Utils_Tuple2(
@@ -5899,10 +5964,10 @@ var $author$project$Main$update = F2(
 						}),
 					$elm$core$Platform$Cmd$none);
 			case 'SubmitUsername':
-				var _v1 = model.appState;
-				if ((_v1.$ === 'Authenticated') && (_v1.b.$ === 'Register')) {
-					var data = _v1.a;
-					var usernameInput = _v1.b.a;
+				var _v2 = model.appState;
+				if ((_v2.$ === 'Authenticated') && (_v2.b.$ === 'Register')) {
+					var data = _v2.a;
+					var usernameInput = _v2.b.a;
 					var trimmed = $elm$core$String$trim(usernameInput);
 					return $elm$core$String$isEmpty(trimmed) ? _Utils_Tuple2(model, $elm$core$Platform$Cmd$none) : _Utils_Tuple2(
 						model,
@@ -5912,10 +5977,10 @@ var $author$project$Main$update = F2(
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				}
 			case 'TogglePage':
-				var _v2 = model.appState;
-				if (_v2.$ === 'Authenticated') {
-					var data = _v2.a;
-					var page = _v2.b;
+				var _v3 = model.appState;
+				if (_v3.$ === 'Authenticated') {
+					var data = _v3.a;
+					var page = _v3.b;
 					switch (page.$) {
 						case 'Home':
 							var weekDates = $author$project$Main$generateWeekDates(data.nextWeekStartDate);
@@ -5998,9 +6063,9 @@ var $author$project$Main$update = F2(
 					},
 					model);
 			case 'SubmitShifts':
-				var _v4 = model.appState;
-				if (_v4.$ === 'Authenticated') {
-					var data = _v4.a;
+				var _v5 = model.appState;
+				if (_v5.$ === 'Authenticated') {
+					var data = _v5.a;
 					var shiftsJson = A3($author$project$Main$encodeShiftInputs, data.user.id, data.nextWeekStartDate, model.shiftInputs);
 					return _Utils_Tuple2(
 						_Utils_update(
