@@ -5428,7 +5428,10 @@ var $author$project$Main$encodeShiftInput = function (input) {
 				(input.isAvailable && (!$elm$core$String$isEmpty(input.startTime))) ? $elm$json$Json$Encode$string(input.startTime) : $elm$json$Json$Encode$null),
 				_Utils_Tuple2(
 				'end_time',
-				(input.isAvailable && (!$elm$core$String$isEmpty(input.endTime))) ? $elm$json$Json$Encode$string(input.endTime) : $elm$json$Json$Encode$null)
+				(input.isAvailable && (!$elm$core$String$isEmpty(input.endTime))) ? $elm$json$Json$Encode$string(input.endTime) : $elm$json$Json$Encode$null),
+				_Utils_Tuple2(
+				'exit_by_end_time',
+				input.isAvailable ? $elm$json$Json$Encode$bool(input.exitByEndTime) : $elm$json$Json$Encode$null)
 			]));
 };
 var $elm$json$Json$Encode$list = F2(
@@ -5572,6 +5575,10 @@ var $author$project$Main$generateWeekDates = function (mondayStr) {
 		return _List_Nil;
 	}
 };
+var $author$project$Main$ShiftInput = F5(
+	function (date, isAvailable, startTime, endTime, exitByEndTime) {
+		return {date: date, endTime: endTime, exitByEndTime: exitByEndTime, isAvailable: isAvailable, startTime: startTime};
+	});
 var $elm$core$List$filter = F2(
 	function (isGood, list) {
 		return A3(
@@ -5619,14 +5626,15 @@ var $author$project$Main$initializeShiftInputs = F2(
 				var _v0 = A2($author$project$Main$findShiftByDate, date, existingShifts);
 				if (_v0.$ === 'Just') {
 					var shift = _v0.a;
-					return {
-						date: date,
-						endTime: A2($elm$core$Maybe$withDefault, '', shift.endTime),
-						isAvailable: shift.isAvailable,
-						startTime: A2($elm$core$Maybe$withDefault, '', shift.startTime)
-					};
+					return A5(
+						$author$project$Main$ShiftInput,
+						date,
+						shift.isAvailable,
+						A2($elm$core$Maybe$withDefault, '', shift.startTime),
+						A2($elm$core$Maybe$withDefault, '', shift.endTime),
+						A2($elm$core$Maybe$withDefault, false, shift.exitByEndTime));
 				} else {
-					return {date: date, endTime: '', isAvailable: true, startTime: ''};
+					return A5($author$project$Main$ShiftInput, date, true, '', '', false);
 				}
 			},
 			dates);

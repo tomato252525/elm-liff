@@ -117,7 +117,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
           end_time: shift.end_time,
           is_available: shift.is_available,
           week_start_date,
-          exit_by_end_time: null // 必要に応じて設定
+          exit_by_end_time: shift.exit_by_end_time
         }));
 
         // upsert を使用（存在する場合は更新、存在しない場合は挿入）
