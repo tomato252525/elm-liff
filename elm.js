@@ -6736,6 +6736,49 @@ var $author$project$Main$UpdateShiftStartTime = F2(
 		return {$: 'UpdateShiftStartTime', a: a, b: b};
 	});
 var $elm$html$Html$Attributes$checked = $elm$html$Html$Attributes$boolProperty('checked');
+var $elm$core$List$append = F2(
+	function (xs, ys) {
+		if (!ys.b) {
+			return xs;
+		} else {
+			return A3($elm$core$List$foldr, $elm$core$List$cons, ys, xs);
+		}
+	});
+var $elm$core$List$concat = function (lists) {
+	return A3($elm$core$List$foldr, $elm$core$List$append, _List_Nil, lists);
+};
+var $elm$core$List$concatMap = F2(
+	function (f, list) {
+		return $elm$core$List$concat(
+			A2($elm$core$List$map, f, list));
+	});
+var $author$project$Main$generateTimeOptions = function () {
+	var toTimeStr = F2(
+		function (h, m) {
+			return $elm$core$String$fromInt(h) + (':' + m);
+		});
+	var minutes = _List_fromArray(
+		['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55']);
+	var hours = A2($elm$core$List$range, 10, 23);
+	return A2(
+		$elm$core$List$cons,
+		'',
+		_Utils_ap(
+			A2(
+				$elm$core$List$concatMap,
+				function (h) {
+					return A2(
+						$elm$core$List$map,
+						toTimeStr(h),
+						minutes);
+				},
+				hours),
+			_List_fromArray(
+				['23:59'])));
+}();
+var $elm$html$Html$option = _VirtualDom_node('option');
+var $elm$html$Html$select = _VirtualDom_node('select');
+var $elm$html$Html$Attributes$selected = $elm$html$Html$Attributes$boolProperty('selected');
 var $author$project$Main$UpdateShiftAvailability = F2(
 	function (a, b) {
 		return {$: 'UpdateShiftAvailability', a: a, b: b};
@@ -6813,16 +6856,40 @@ var $author$project$Main$viewShiftInputRow = function (shiftInput) {
 						_List_fromArray(
 							[
 								A2(
-								$elm$html$Html$input,
+								$elm$html$Html$div,
 								_List_fromArray(
 									[
-										$elm$html$Html$Attributes$type_('time'),
-										$elm$html$Html$Attributes$value(shiftInput.startTime),
-										$elm$html$Html$Events$onInput(
-										$author$project$Main$UpdateShiftStartTime(shiftInput.date)),
-										$elm$html$Html$Attributes$class('flex-1 h-14 px-3 text-center bg-gray-50 border border-gray-200 rounded-xl text-lg font-medium focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none')
+										$elm$html$Html$Attributes$class('relative flex-1')
 									]),
-								_List_Nil),
+								_List_fromArray(
+									[
+										A2(
+										$elm$html$Html$select,
+										_List_fromArray(
+											[
+												$elm$html$Html$Attributes$value(shiftInput.startTime),
+												$elm$html$Html$Events$onInput(
+												$author$project$Main$UpdateShiftStartTime(shiftInput.date)),
+												$elm$html$Html$Attributes$class('w-full h-14 px-3 text-center bg-gray-50 border border-gray-200 rounded-xl text-lg font-medium focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none appearance-none')
+											]),
+										A2(
+											$elm$core$List$map,
+											function (t) {
+												return A2(
+													$elm$html$Html$option,
+													_List_fromArray(
+														[
+															$elm$html$Html$Attributes$value(t),
+															$elm$html$Html$Attributes$selected(
+															_Utils_eq(t, shiftInput.startTime))
+														]),
+													_List_fromArray(
+														[
+															$elm$html$Html$text(t)
+														]));
+											},
+											$author$project$Main$generateTimeOptions))
+									])),
 								A2(
 								$elm$html$Html$span,
 								_List_fromArray(
@@ -6834,16 +6901,40 @@ var $author$project$Main$viewShiftInputRow = function (shiftInput) {
 										$elm$html$Html$text('～')
 									])),
 								A2(
-								$elm$html$Html$input,
+								$elm$html$Html$div,
 								_List_fromArray(
 									[
-										$elm$html$Html$Attributes$type_('time'),
-										$elm$html$Html$Attributes$value(shiftInput.endTime),
-										$elm$html$Html$Events$onInput(
-										$author$project$Main$UpdateShiftEndTime(shiftInput.date)),
-										$elm$html$Html$Attributes$class('flex-1 h-14 px-3 text-center bg-gray-50 border border-gray-200 rounded-xl text-lg font-medium focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none')
+										$elm$html$Html$Attributes$class('relative flex-1')
 									]),
-								_List_Nil)
+								_List_fromArray(
+									[
+										A2(
+										$elm$html$Html$select,
+										_List_fromArray(
+											[
+												$elm$html$Html$Attributes$value(shiftInput.endTime),
+												$elm$html$Html$Events$onInput(
+												$author$project$Main$UpdateShiftEndTime(shiftInput.date)),
+												$elm$html$Html$Attributes$class('w-full h-14 px-3 text-center bg-gray-50 border border-gray-200 rounded-xl text-lg font-medium focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none appearance-none')
+											]),
+										A2(
+											$elm$core$List$map,
+											function (t) {
+												return A2(
+													$elm$html$Html$option,
+													_List_fromArray(
+														[
+															$elm$html$Html$Attributes$value(t),
+															$elm$html$Html$Attributes$selected(
+															_Utils_eq(t, shiftInput.endTime))
+														]),
+													_List_fromArray(
+														[
+															$elm$html$Html$text(t)
+														]));
+											},
+											$author$project$Main$generateTimeOptions))
+									]))
 							])),
 						A2(
 						$elm$html$Html$label,
