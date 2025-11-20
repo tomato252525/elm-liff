@@ -7056,6 +7056,128 @@ var $author$project$Main$viewShiftInputRow = function (shiftInput) {
 					]))
 			]));
 };
+var $author$project$Main$viewShiftRequestCard = function (shift) {
+	return shift.isAvailable ? A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				$elm$html$Html$Attributes$class('bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-stretch relative overflow-hidden')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$class('absolute left-0 top-0 bottom-0 w-1.5 bg-blue-500')
+					]),
+				_List_Nil),
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$class('flex-1 pl-3')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class('flex justify-between items-start mb-1')
+							]),
+						_List_fromArray(
+							[
+								A2(
+								$elm$html$Html$h3,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('font-bold text-lg text-gray-800')
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text(
+										$author$project$Main$formatDateWithWeekday(shift.date))
+									])),
+								shift.exitByEndTime ? A2(
+								$elm$html$Html$span,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('bg-orange-100 text-orange-700 text-[10px] font-bold px-2 py-0.5 rounded-full')
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text('LAST')
+									])) : $elm$html$Html$text('')
+							])),
+						A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class('flex items-center text-gray-600 font-medium text-base')
+							]),
+						_List_fromArray(
+							[
+								A2(
+								$elm$html$Html$span,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('mr-2 text-lg')
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text('⏰')
+									])),
+								$elm$html$Html$text(shift.startTime + (' 〜 ' + shift.endTime))
+							]))
+					]))
+			])) : A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				$elm$html$Html$Attributes$class('bg-gray-50 rounded-2xl p-4 shadow-sm border border-gray-200 flex items-stretch relative overflow-hidden')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$class('absolute left-0 top-0 bottom-0 w-1.5 bg-gray-300')
+					]),
+				_List_Nil),
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$class('flex-1 pl-3 flex items-center')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$h3,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class('font-bold text-lg text-gray-400')
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text(
+								$author$project$Main$formatDateWithWeekday(shift.date))
+							])),
+						A2(
+						$elm$html$Html$span,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class('ml-auto text-gray-400 font-bold text-sm bg-gray-200 px-3 py-1 rounded-full')
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('休み')
+							]))
+					]))
+			]));
+};
 var $author$project$Main$viewShiftPage = F4(
 	function (data, shiftState, shiftInputs, isSubmitting) {
 		return A2(
@@ -7259,9 +7381,9 @@ var $author$project$Main$viewShiftPage = F4(
 										$elm$html$Html$div,
 										_List_fromArray(
 											[
-												$elm$html$Html$Attributes$class('space-y-3 opacity-80 pointer-events-none grayscale')
+												$elm$html$Html$Attributes$class('space-y-3')
 											]),
-										A2($elm$core$List$map, $author$project$Main$viewShiftInputRow, shiftInputs));
+										A2($elm$core$List$map, $author$project$Main$viewShiftRequestCard, shiftInputs));
 								default:
 									return A2(
 										$elm$html$Html$div,
