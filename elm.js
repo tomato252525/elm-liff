@@ -6326,7 +6326,7 @@ var $author$project$Main$viewHome = F2(
 					$elm$html$Html$div,
 					_List_fromArray(
 						[
-							$elm$html$Html$Attributes$class('bg-white px-6 pt-8 pb-6 shadow-sm rounded-b-3xl mb-6')
+							$elm$html$Html$Attributes$class('bg-white px-6 py-6 shadow-sm rounded-b-3xl mb-6')
 						]),
 					_List_fromArray(
 						[
@@ -6782,6 +6782,83 @@ var $author$project$Main$UpdateShiftStartTime = F2(
 		return {$: 'UpdateShiftStartTime', a: a, b: b};
 	});
 var $elm$html$Html$Attributes$checked = $elm$html$Html$Attributes$boolProperty('checked');
+var $elm$core$List$append = F2(
+	function (xs, ys) {
+		if (!ys.b) {
+			return xs;
+		} else {
+			return A3($elm$core$List$foldr, $elm$core$List$cons, ys, xs);
+		}
+	});
+var $elm$core$List$concat = function (lists) {
+	return A3($elm$core$List$foldr, $elm$core$List$append, _List_Nil, lists);
+};
+var $elm$core$List$concatMap = F2(
+	function (f, list) {
+		return $elm$core$List$concat(
+			A2($elm$core$List$map, f, list));
+	});
+var $elm$html$Html$option = _VirtualDom_node('option');
+var $elm$html$Html$Attributes$selected = $elm$html$Html$Attributes$boolProperty('selected');
+var $author$project$Main$generateTimeOptions = function (currentValue) {
+	var placeholderOption = A2(
+		$elm$html$Html$option,
+		_List_fromArray(
+			[
+				$elm$html$Html$Attributes$value(''),
+				$elm$html$Html$Attributes$disabled(true),
+				$elm$html$Html$Attributes$selected(currentValue === '')
+			]),
+		_List_fromArray(
+			[
+				$elm$html$Html$text('選択してください')
+			]));
+	var minutes = _List_fromArray(
+		[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]);
+	var hours = A2($elm$core$List$range, 10, 23);
+	var formatTime = F2(
+		function (h, m) {
+			return A3(
+				$elm$core$String$padLeft,
+				2,
+				_Utils_chr('0'),
+				$elm$core$String$fromInt(h)) + (':' + A3(
+				$elm$core$String$padLeft,
+				2,
+				_Utils_chr('0'),
+				$elm$core$String$fromInt(m)));
+		});
+	var allTimes = A2(
+		$elm$core$List$concatMap,
+		function (h) {
+			return A2(
+				$elm$core$List$map,
+				function (m) {
+					return A2(formatTime, h, m);
+				},
+				minutes);
+		},
+		hours);
+	var timeOptions = A2(
+		$elm$core$List$map,
+		function (timeStr) {
+			return A2(
+				$elm$html$Html$option,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$value(timeStr),
+						$elm$html$Html$Attributes$selected(
+						_Utils_eq(timeStr, currentValue))
+					]),
+				_List_fromArray(
+					[
+						$elm$html$Html$text(timeStr)
+					]));
+		},
+		allTimes);
+	return A2($elm$core$List$cons, placeholderOption, timeOptions);
+};
+var $elm$html$Html$select = _VirtualDom_node('select');
 var $author$project$Main$UpdateShiftAvailability = F2(
 	function (a, b) {
 		return {$: 'UpdateShiftAvailability', a: a, b: b};
@@ -6859,16 +6936,15 @@ var $author$project$Main$viewShiftInputRow = function (shiftInput) {
 						_List_fromArray(
 							[
 								A2(
-								$elm$html$Html$input,
+								$elm$html$Html$select,
 								_List_fromArray(
 									[
-										$elm$html$Html$Attributes$type_('time'),
 										$elm$html$Html$Attributes$value(shiftInput.startTime),
 										$elm$html$Html$Events$onInput(
 										$author$project$Main$UpdateShiftStartTime(shiftInput.date)),
-										$elm$html$Html$Attributes$class('flex-1 h-14 px-3 text-center bg-gray-50 border border-gray-200 rounded-xl text-lg font-medium focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none')
+										$elm$html$Html$Attributes$class('flex-1 h-14 px-3 text-center bg-gray-50 border border-gray-200 rounded-xl text-lg font-medium focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer')
 									]),
-								_List_Nil),
+								$author$project$Main$generateTimeOptions(shiftInput.startTime)),
 								A2(
 								$elm$html$Html$span,
 								_List_fromArray(
@@ -6880,16 +6956,15 @@ var $author$project$Main$viewShiftInputRow = function (shiftInput) {
 										$elm$html$Html$text('～')
 									])),
 								A2(
-								$elm$html$Html$input,
+								$elm$html$Html$select,
 								_List_fromArray(
 									[
-										$elm$html$Html$Attributes$type_('time'),
 										$elm$html$Html$Attributes$value(shiftInput.endTime),
 										$elm$html$Html$Events$onInput(
 										$author$project$Main$UpdateShiftEndTime(shiftInput.date)),
-										$elm$html$Html$Attributes$class('flex-1 h-14 px-3 text-center bg-gray-50 border border-gray-200 rounded-xl text-lg font-medium focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none')
+										$elm$html$Html$Attributes$class('flex-1 h-14 px-3 text-center bg-gray-50 border border-gray-200 rounded-xl text-lg font-medium focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer')
 									]),
-								_List_Nil)
+								$author$project$Main$generateTimeOptions(shiftInput.endTime))
 							])),
 						A2(
 						$elm$html$Html$label,
