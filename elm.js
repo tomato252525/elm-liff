@@ -6082,7 +6082,7 @@ var $author$project$Main$update = F2(
 				} else {
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				}
-			default:
+			case 'ShiftSubmitted':
 				var data = msg.a;
 				return _Utils_Tuple2(
 					_Utils_update(
@@ -6093,6 +6093,10 @@ var $author$project$Main$update = F2(
 							shiftInputs: _List_Nil
 						}),
 					$elm$core$Platform$Cmd$none);
+			default:
+				return _Utils_Tuple2(
+					model,
+					$author$project$Main$refreshDataRequest(_Utils_Tuple0));
 		}
 	});
 var $elm$html$Html$Attributes$stringProperty = F2(
@@ -6104,6 +6108,7 @@ var $elm$html$Html$Attributes$stringProperty = F2(
 	});
 var $elm$html$Html$Attributes$class = $elm$html$Html$Attributes$stringProperty('className');
 var $elm$html$Html$div = _VirtualDom_node('div');
+var $author$project$Main$RefreshData = {$: 'RefreshData'};
 var $author$project$Main$TogglePage = {$: 'TogglePage'};
 var $elm$html$Html$button = _VirtualDom_node('button');
 var $elm$core$Maybe$map = F2(
@@ -6334,45 +6339,26 @@ var $author$project$Main$viewHome = F2(
 							_List_fromArray(
 								[
 									A2(
-									$elm$html$Html$div,
-									_List_Nil,
+									$elm$html$Html$h1,
 									_List_fromArray(
 										[
-											A2(
-											$elm$html$Html$p,
-											_List_fromArray(
-												[
-													$elm$html$Html$Attributes$class('text-xs text-gray-400 font-bold uppercase tracking-wider mb-1')
-												]),
-											_List_fromArray(
-												[
-													$elm$html$Html$text('Welcome')
-												])),
-											A2(
-											$elm$html$Html$h1,
-											_List_fromArray(
-												[
-													$elm$html$Html$Attributes$class('text-2xl font-extrabold text-gray-900')
-												]),
-											_List_fromArray(
-												[
-													$elm$html$Html$text(
-													A2($elm$core$Maybe$withDefault, 'ゲスト', data.user.name))
-												]))
-										])),
-									A2(
-									$elm$html$Html$div,
-									_List_fromArray(
-										[
-											$elm$html$Html$Attributes$class('h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-xl shadow-inner')
+											$elm$html$Html$Attributes$class('text-2xl font-extrabold text-gray-900')
 										]),
 									_List_fromArray(
 										[
 											$elm$html$Html$text(
-											A2(
-												$elm$core$String$left,
-												1,
-												A2($elm$core$Maybe$withDefault, 'G', data.user.name)))
+											A2($elm$core$Maybe$withDefault, 'ゲスト', data.user.name) + ' さん')
+										])),
+									A2(
+									$elm$html$Html$button,
+									_List_fromArray(
+										[
+											$elm$html$Html$Events$onClick($author$project$Main$RefreshData),
+											$elm$html$Html$Attributes$class('h-10 w-10 bg-blue-100 hover:bg-blue-200 rounded-full flex items-center justify-center text-blue-600 transition-colors active:scale-95')
+										]),
+									_List_fromArray(
+										[
+											$elm$html$Html$text('🔄')
 										]))
 								])),
 							function () {
