@@ -5287,13 +5287,13 @@ var $author$project$Main$Data = F6(
 	function (user, currentWeekStartDate, currentWeekShifts, nextWeekStartDate, nextWeekShifts, nextWeekConfirmedShifts) {
 		return {currentWeekShifts: currentWeekShifts, currentWeekStartDate: currentWeekStartDate, nextWeekConfirmedShifts: nextWeekConfirmedShifts, nextWeekShifts: nextWeekShifts, nextWeekStartDate: nextWeekStartDate, user: user};
 	});
-var $author$project$Main$ConfirmedShift = F6(
-	function (id, date, startTime, endTime, exitByEndTime, note) {
-		return {date: date, endTime: endTime, exitByEndTime: exitByEndTime, id: id, note: note, startTime: startTime};
+var $author$project$Main$ConfirmedShift = F7(
+	function (id, date, startTime, endTime, state, exitByEndTime, note) {
+		return {date: date, endTime: endTime, exitByEndTime: exitByEndTime, id: id, note: note, startTime: startTime, state: state};
 	});
 var $elm$json$Json$Decode$bool = _Json_decodeBool;
 var $elm$json$Json$Decode$field = _Json_decodeField;
-var $elm$json$Json$Decode$map6 = _Json_map6;
+var $elm$json$Json$Decode$map7 = _Json_map7;
 var $elm$json$Json$Decode$null = _Json_decodeNull;
 var $elm$json$Json$Decode$oneOf = _Json_oneOf;
 var $elm$json$Json$Decode$nullable = function (decoder) {
@@ -5314,13 +5314,14 @@ var $elm$core$Maybe$withDefault = F2(
 			return _default;
 		}
 	});
-var $author$project$Main$confirmedShiftDecoder = A7(
-	$elm$json$Json$Decode$map6,
+var $author$project$Main$confirmedShiftDecoder = A8(
+	$elm$json$Json$Decode$map7,
 	$author$project$Main$ConfirmedShift,
 	A2($elm$json$Json$Decode$field, 'id', $elm$json$Json$Decode$string),
 	A2($elm$json$Json$Decode$field, 'date', $elm$json$Json$Decode$string),
 	A2($elm$json$Json$Decode$field, 'start_time', $elm$json$Json$Decode$string),
 	A2($elm$json$Json$Decode$field, 'end_time', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'state', $elm$json$Json$Decode$string),
 	A2(
 		$elm$json$Json$Decode$map,
 		$elm$core$Maybe$withDefault(false),
@@ -5333,6 +5334,7 @@ var $author$project$Main$confirmedShiftDecoder = A7(
 		'note',
 		$elm$json$Json$Decode$nullable($elm$json$Json$Decode$string)));
 var $elm$json$Json$Decode$list = _Json_decodeList;
+var $elm$json$Json$Decode$map6 = _Json_map6;
 var $author$project$Main$ShiftRequest = F6(
 	function (id, date, startTime, endTime, exitByEndTime, isAvailable) {
 		return {date: date, endTime: endTime, exitByEndTime: exitByEndTime, id: id, isAvailable: isAvailable, startTime: startTime};
@@ -7113,7 +7115,7 @@ var $author$project$Main$viewShiftPage = F4(
 			$elm$html$Html$div,
 			_List_fromArray(
 				[
-					$elm$html$Html$Attributes$class('max-w-md mx-auto w-full pb-24')
+					$elm$html$Html$Attributes$class('max-w-md mx-auto w-full')
 				]),
 			_List_fromArray(
 				[
