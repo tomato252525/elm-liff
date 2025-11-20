@@ -241,7 +241,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
             const errorMessage = result.error || result.message || 'Token verification failed';
 
             // IDトークン期限切れ時の再ログイン処理
-            if (!liff.isInClient() && errorMessage === 'id_token_expired') {
+            if (errorMessage === 'id_token_expired') {
               const url = new URL(location.href);
               const retried = url.searchParams.get('relogin') === '1';
 
