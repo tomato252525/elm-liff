@@ -7040,7 +7040,7 @@ var $author$project$Main$viewShiftRequestCard = function (shift) {
 				$elm$html$Html$div,
 				_List_fromArray(
 					[
-						$elm$html$Html$Attributes$class('flex-1 pl-3')
+						$elm$html$Html$Attributes$class('flex-1 pl-3 flex items-center')
 					]),
 				_List_fromArray(
 					[
@@ -7053,13 +7053,13 @@ var $author$project$Main$viewShiftRequestCard = function (shift) {
 						_List_fromArray(
 							[
 								$elm$html$Html$text(
-								$author$project$Main$formatDateWithWeekday(shift.date))
+								$author$project$Main$formatDateWithWeekday(shift.date) + (' ' + (shift.startTime + (' 〜 ' + (shift.endTime + (' ' + (shift.exitByEndTime ? '上' : '受')))))))
 							])),
 						A2(
 						$elm$html$Html$div,
 						_List_fromArray(
 							[
-								$elm$html$Html$Attributes$class('flex items-center text-gray-600 font-medium text-base')
+								$elm$html$Html$Attributes$class('items-center text-gray-600 font-medium text-base')
 							]),
 						_List_fromArray(
 							[
