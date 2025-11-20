@@ -7040,7 +7040,7 @@ var $author$project$Main$viewShiftRequestCard = function (shift) {
 				$elm$html$Html$div,
 				_List_fromArray(
 					[
-						$elm$html$Html$Attributes$class('flex-1 pl-3 flex items-center')
+						$elm$html$Html$Attributes$class('flex-1 px-3 flex items-center')
 					]),
 				_List_fromArray(
 					[
@@ -7059,7 +7059,7 @@ var $author$project$Main$viewShiftRequestCard = function (shift) {
 						$elm$html$Html$div,
 						_List_fromArray(
 							[
-								$elm$html$Html$Attributes$class('items-center text-gray-600 font-medium text-base')
+								$elm$html$Html$Attributes$class('ml-auto text-gray-600 font-bold text-base')
 							]),
 						_List_fromArray(
 							[
@@ -7079,7 +7079,7 @@ var $author$project$Main$viewShiftRequestCard = function (shift) {
 				$elm$html$Html$div,
 				_List_fromArray(
 					[
-						$elm$html$Html$Attributes$class('flex-1 pl-3 flex items-center')
+						$elm$html$Html$Attributes$class('flex-1 px-3 flex items-center')
 					]),
 				_List_fromArray(
 					[
