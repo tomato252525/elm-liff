@@ -7069,46 +7069,20 @@ var $author$project$Main$viewShiftRequestCard = function (shift) {
 				$elm$html$Html$div,
 				_List_fromArray(
 					[
-						$elm$html$Html$Attributes$class('absolute left-0 top-0 bottom-0 w-1.5 bg-blue-500')
-					]),
-				_List_Nil),
-				A2(
-				$elm$html$Html$div,
-				_List_fromArray(
-					[
 						$elm$html$Html$Attributes$class('flex-1 pl-3')
 					]),
 				_List_fromArray(
 					[
 						A2(
-						$elm$html$Html$div,
+						$elm$html$Html$h3,
 						_List_fromArray(
 							[
-								$elm$html$Html$Attributes$class('flex justify-between items-start mb-1')
+								$elm$html$Html$Attributes$class('font-bold text-lg text-gray-800')
 							]),
 						_List_fromArray(
 							[
-								A2(
-								$elm$html$Html$h3,
-								_List_fromArray(
-									[
-										$elm$html$Html$Attributes$class('font-bold text-lg text-gray-800')
-									]),
-								_List_fromArray(
-									[
-										$elm$html$Html$text(
-										$author$project$Main$formatDateWithWeekday(shift.date))
-									])),
-								shift.exitByEndTime ? A2(
-								$elm$html$Html$span,
-								_List_fromArray(
-									[
-										$elm$html$Html$Attributes$class('bg-orange-100 text-orange-700 text-[10px] font-bold px-2 py-0.5 rounded-full')
-									]),
-								_List_fromArray(
-									[
-										$elm$html$Html$text('LAST')
-									])) : $elm$html$Html$text('')
+								$elm$html$Html$text(
+								$author$project$Main$formatDateWithWeekday(shift.date))
 							])),
 						A2(
 						$elm$html$Html$div,
@@ -7128,7 +7102,8 @@ var $author$project$Main$viewShiftRequestCard = function (shift) {
 									[
 										$elm$html$Html$text('⏰')
 									])),
-								$elm$html$Html$text(shift.startTime + (' 〜 ' + shift.endTime))
+								$elm$html$Html$text(
+								shift.startTime + (' 〜 ' + (shift.endTime + (' ' + (shift.exitByEndTime ? '上' : '受')))))
 							]))
 					]))
 			])) : A2(
@@ -7139,13 +7114,6 @@ var $author$project$Main$viewShiftRequestCard = function (shift) {
 			]),
 		_List_fromArray(
 			[
-				A2(
-				$elm$html$Html$div,
-				_List_fromArray(
-					[
-						$elm$html$Html$Attributes$class('absolute left-0 top-0 bottom-0 w-1.5 bg-gray-300')
-					]),
-				_List_Nil),
 				A2(
 				$elm$html$Html$div,
 				_List_fromArray(
