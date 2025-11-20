@@ -5513,7 +5513,7 @@ var $author$project$Main$encodeShiftInput = function (shiftInput) {
 				(shiftInput.isAvailable && (shiftInput.endTime !== '')) ? $elm$json$Json$Encode$string(shiftInput.endTime) : $elm$json$Json$Encode$null),
 				_Utils_Tuple2(
 				'exit_by_end_time',
-				$elm$json$Json$Encode$bool(shiftInput.exitByEndTime))
+				shiftInput.isAvailable ? $elm$json$Json$Encode$bool(shiftInput.exitByEndTime) : $elm$json$Json$Encode$null)
 			]));
 };
 var $elm$json$Json$Encode$list = F2(
@@ -5698,23 +5698,22 @@ var $elm$core$List$isEmpty = function (xs) {
 		return false;
 	}
 };
-var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
-var $elm$core$Basics$not = _Basics_not;
-var $author$project$Main$refreshDataRequest = _Platform_outgoingPort(
-	'refreshDataRequest',
-	function ($) {
-		return $elm$json$Json$Encode$null;
-	});
 var $author$project$Main$jst = A2($elm$time$Time$customZone, 9 * 60, _List_Nil);
-var $elm$time$Time$posixToMillis = function (_v0) {
-	var millis = _v0.a;
-	return millis;
-};
-var $elm$core$Process$sleep = _Process_sleep;
+var $elm$time$Time$Fri = {$: 'Fri'};
+var $elm$time$Time$Mon = {$: 'Mon'};
+var $elm$time$Time$Sat = {$: 'Sat'};
+var $elm$time$Time$Sun = {$: 'Sun'};
+var $elm$time$Time$Thu = {$: 'Thu'};
+var $elm$time$Time$Tue = {$: 'Tue'};
+var $elm$time$Time$Wed = {$: 'Wed'};
 var $elm$time$Time$flooredDiv = F2(
 	function (numerator, denominator) {
 		return $elm$core$Basics$floor(numerator / denominator);
 	});
+var $elm$time$Time$posixToMillis = function (_v0) {
+	var millis = _v0.a;
+	return millis;
+};
 var $elm$time$Time$toAdjustedMinutesHelp = F3(
 	function (defaultOffset, posixMinutes, eras) {
 		toAdjustedMinutesHelp:
@@ -5751,6 +5750,53 @@ var $elm$time$Time$toAdjustedMinutes = F2(
 				60000),
 			eras);
 	});
+var $elm$time$Time$toWeekday = F2(
+	function (zone, time) {
+		var _v0 = A2(
+			$elm$core$Basics$modBy,
+			7,
+			A2(
+				$elm$time$Time$flooredDiv,
+				A2($elm$time$Time$toAdjustedMinutes, zone, time),
+				60 * 24));
+		switch (_v0) {
+			case 0:
+				return $elm$time$Time$Thu;
+			case 1:
+				return $elm$time$Time$Fri;
+			case 2:
+				return $elm$time$Time$Sat;
+			case 3:
+				return $elm$time$Time$Sun;
+			case 4:
+				return $elm$time$Time$Mon;
+			case 5:
+				return $elm$time$Time$Tue;
+			default:
+				return $elm$time$Time$Wed;
+		}
+	});
+var $author$project$Main$isMonToWed = function (now) {
+	var _v0 = A2($elm$time$Time$toWeekday, $author$project$Main$jst, now);
+	switch (_v0.$) {
+		case 'Mon':
+			return true;
+		case 'Tue':
+			return true;
+		case 'Wed':
+			return true;
+		default:
+			return false;
+	}
+};
+var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
+var $elm$core$Basics$not = _Basics_not;
+var $author$project$Main$refreshDataRequest = _Platform_outgoingPort(
+	'refreshDataRequest',
+	function ($) {
+		return $elm$json$Json$Encode$null;
+	});
+var $elm$core$Process$sleep = _Process_sleep;
 var $elm$time$Time$toHour = F2(
 	function (zone, time) {
 		return A2(
@@ -5860,7 +5906,7 @@ var $author$project$Main$update = F2(
 		switch (msg.$) {
 			case 'GotNow':
 				var now = msg.a;
-				var isMonWed = true;
+				var isMonWed = $author$project$Main$isMonToWed(now);
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
@@ -6736,83 +6782,6 @@ var $author$project$Main$UpdateShiftStartTime = F2(
 		return {$: 'UpdateShiftStartTime', a: a, b: b};
 	});
 var $elm$html$Html$Attributes$checked = $elm$html$Html$Attributes$boolProperty('checked');
-var $elm$core$List$append = F2(
-	function (xs, ys) {
-		if (!ys.b) {
-			return xs;
-		} else {
-			return A3($elm$core$List$foldr, $elm$core$List$cons, ys, xs);
-		}
-	});
-var $elm$core$List$concat = function (lists) {
-	return A3($elm$core$List$foldr, $elm$core$List$append, _List_Nil, lists);
-};
-var $elm$core$List$concatMap = F2(
-	function (f, list) {
-		return $elm$core$List$concat(
-			A2($elm$core$List$map, f, list));
-	});
-var $elm$html$Html$option = _VirtualDom_node('option');
-var $elm$html$Html$Attributes$selected = $elm$html$Html$Attributes$boolProperty('selected');
-var $author$project$Main$generateTimeOptions = function (currentValue) {
-	var placeholderOption = A2(
-		$elm$html$Html$option,
-		_List_fromArray(
-			[
-				$elm$html$Html$Attributes$value(''),
-				$elm$html$Html$Attributes$disabled(true),
-				$elm$html$Html$Attributes$selected(currentValue === '')
-			]),
-		_List_fromArray(
-			[
-				$elm$html$Html$text('選択してください')
-			]));
-	var minutes = _List_fromArray(
-		[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]);
-	var hours = A2($elm$core$List$range, 10, 23);
-	var formatTime = F2(
-		function (h, m) {
-			return A3(
-				$elm$core$String$padLeft,
-				2,
-				_Utils_chr('0'),
-				$elm$core$String$fromInt(h)) + (':' + A3(
-				$elm$core$String$padLeft,
-				2,
-				_Utils_chr('0'),
-				$elm$core$String$fromInt(m)));
-		});
-	var allTimes = A2(
-		$elm$core$List$concatMap,
-		function (h) {
-			return A2(
-				$elm$core$List$map,
-				function (m) {
-					return A2(formatTime, h, m);
-				},
-				minutes);
-		},
-		hours);
-	var timeOptions = A2(
-		$elm$core$List$map,
-		function (timeStr) {
-			return A2(
-				$elm$html$Html$option,
-				_List_fromArray(
-					[
-						$elm$html$Html$Attributes$value(timeStr),
-						$elm$html$Html$Attributes$selected(
-						_Utils_eq(timeStr, currentValue))
-					]),
-				_List_fromArray(
-					[
-						$elm$html$Html$text(timeStr)
-					]));
-		},
-		allTimes);
-	return A2($elm$core$List$cons, placeholderOption, timeOptions);
-};
-var $elm$html$Html$select = _VirtualDom_node('select');
 var $author$project$Main$UpdateShiftAvailability = F2(
 	function (a, b) {
 		return {$: 'UpdateShiftAvailability', a: a, b: b};
@@ -6890,15 +6859,16 @@ var $author$project$Main$viewShiftInputRow = function (shiftInput) {
 						_List_fromArray(
 							[
 								A2(
-								$elm$html$Html$select,
+								$elm$html$Html$input,
 								_List_fromArray(
 									[
+										$elm$html$Html$Attributes$type_('time'),
 										$elm$html$Html$Attributes$value(shiftInput.startTime),
 										$elm$html$Html$Events$onInput(
 										$author$project$Main$UpdateShiftStartTime(shiftInput.date)),
-										$elm$html$Html$Attributes$class('flex-1 h-14 px-3 text-center bg-gray-50 border border-gray-200 rounded-xl text-lg font-medium focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer')
+										$elm$html$Html$Attributes$class('flex-1 h-14 px-3 text-center bg-gray-50 border border-gray-200 rounded-xl text-lg font-medium focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none')
 									]),
-								$author$project$Main$generateTimeOptions(shiftInput.startTime)),
+								_List_Nil),
 								A2(
 								$elm$html$Html$span,
 								_List_fromArray(
@@ -6910,15 +6880,16 @@ var $author$project$Main$viewShiftInputRow = function (shiftInput) {
 										$elm$html$Html$text('～')
 									])),
 								A2(
-								$elm$html$Html$select,
+								$elm$html$Html$input,
 								_List_fromArray(
 									[
+										$elm$html$Html$Attributes$type_('time'),
 										$elm$html$Html$Attributes$value(shiftInput.endTime),
 										$elm$html$Html$Events$onInput(
 										$author$project$Main$UpdateShiftEndTime(shiftInput.date)),
-										$elm$html$Html$Attributes$class('flex-1 h-14 px-3 text-center bg-gray-50 border border-gray-200 rounded-xl text-lg font-medium focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer')
+										$elm$html$Html$Attributes$class('flex-1 h-14 px-3 text-center bg-gray-50 border border-gray-200 rounded-xl text-lg font-medium focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none')
 									]),
-								$author$project$Main$generateTimeOptions(shiftInput.endTime))
+								_List_Nil)
 							])),
 						A2(
 						$elm$html$Html$label,
