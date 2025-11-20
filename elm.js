@@ -7053,13 +7053,13 @@ var $author$project$Main$viewShiftRequestCard = function (shift) {
 						_List_fromArray(
 							[
 								$elm$html$Html$text(
-								$author$project$Main$formatDateWithWeekday(shift.date) + (' ' + (shift.startTime + (' 〜 ' + (shift.endTime + (' ' + (shift.exitByEndTime ? '上' : '受')))))))
+								$author$project$Main$formatDateWithWeekday(shift.date))
 							])),
 						A2(
 						$elm$html$Html$div,
 						_List_fromArray(
 							[
-								$elm$html$Html$Attributes$class('ml-auto text-gray-600 font-bold text-base')
+								$elm$html$Html$Attributes$class('ml-auto text-gray-600 font-bold text-lg')
 							]),
 						_List_fromArray(
 							[
