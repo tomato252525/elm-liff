@@ -5644,6 +5644,13 @@ var $author$project$Main$ShiftInput = F5(
 	function (date, isAvailable, startTime, endTime, exitByEndTime) {
 		return {date: date, endTime: endTime, exitByEndTime: exitByEndTime, isAvailable: isAvailable, startTime: startTime};
 	});
+var $elm$core$Basics$negate = function (n) {
+	return -n;
+};
+var $elm$core$String$dropRight = F2(
+	function (n, string) {
+		return (n < 1) ? string : A3($elm$core$String$slice, 0, -n, string);
+	});
 var $elm$core$List$filter = F2(
 	function (isGood, list) {
 		return A3(
@@ -5682,8 +5689,14 @@ var $author$project$Main$initializeShiftInputs = F2(
 						$author$project$Main$ShiftInput,
 						date,
 						req.isAvailable,
-						A2($elm$core$Maybe$withDefault, '', req.startTime),
-						A2($elm$core$Maybe$withDefault, '', req.endTime),
+						A2(
+							$elm$core$String$dropRight,
+							3,
+							A2($elm$core$Maybe$withDefault, '', req.startTime)),
+						A2(
+							$elm$core$String$dropRight,
+							3,
+							A2($elm$core$Maybe$withDefault, '', req.endTime)),
 						req.exitByEndTime);
 				} else {
 					return A5($author$project$Main$ShiftInput, date, false, '', '', false);
