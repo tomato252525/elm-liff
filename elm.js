@@ -6229,7 +6229,6 @@ var $author$project$Main$formatDateWithWeekday = function (dateStr) {
 	return formatted + (' (' + (weekday + ')'));
 };
 var $elm$html$Html$h3 = _VirtualDom_node('h3');
-var $elm$html$Html$span = _VirtualDom_node('span');
 var $author$project$Main$viewConfirmedShiftCard = function (shift) {
 	return A2(
 		$elm$html$Html$div,
@@ -6272,17 +6271,7 @@ var $author$project$Main$viewConfirmedShiftCard = function (shift) {
 									[
 										$elm$html$Html$text(
 										$author$project$Main$formatDateWithWeekday(shift.date))
-									])),
-								shift.exitByEndTime ? A2(
-								$elm$html$Html$span,
-								_List_fromArray(
-									[
-										$elm$html$Html$Attributes$class('bg-orange-100 text-orange-700 text-[10px] font-bold px-2 py-0.5 rounded-full')
-									]),
-								_List_fromArray(
-									[
-										$elm$html$Html$text('LAST')
-									])) : $elm$html$Html$text('')
+									]))
 							])),
 						A2(
 						$elm$html$Html$div,
@@ -6292,17 +6281,8 @@ var $author$project$Main$viewConfirmedShiftCard = function (shift) {
 							]),
 						_List_fromArray(
 							[
-								A2(
-								$elm$html$Html$span,
-								_List_fromArray(
-									[
-										$elm$html$Html$Attributes$class('mr-2 text-lg')
-									]),
-								_List_fromArray(
-									[
-										$elm$html$Html$text('⏰')
-									])),
-								$elm$html$Html$text(shift.startTime + (' 〜 ' + shift.endTime))
+								$elm$html$Html$text(
+								shift.startTime + (' 〜 ' + (shift.endTime + (' ' + (shift.exitByEndTime ? '上' : '受')))))
 							])),
 						function () {
 						var _v0 = shift.note;
@@ -6561,16 +6541,6 @@ var $author$project$Main$viewHome = F2(
 								]),
 							_List_fromArray(
 								[
-									A2(
-									$elm$html$Html$p,
-									_List_fromArray(
-										[
-											$elm$html$Html$Attributes$class('text-4xl mb-2')
-										]),
-									_List_fromArray(
-										[
-											$elm$html$Html$text('☕️')
-										])),
 									A2(
 									$elm$html$Html$p,
 									_List_fromArray(
@@ -6838,6 +6808,7 @@ var $author$project$Main$generateTimeOptions = function () {
 var $elm$html$Html$option = _VirtualDom_node('option');
 var $elm$html$Html$select = _VirtualDom_node('select');
 var $elm$html$Html$Attributes$selected = $elm$html$Html$Attributes$boolProperty('selected');
+var $elm$html$Html$span = _VirtualDom_node('span');
 var $author$project$Main$UpdateShiftAvailability = F2(
 	function (a, b) {
 		return {$: 'UpdateShiftAvailability', a: a, b: b};
@@ -7092,16 +7063,6 @@ var $author$project$Main$viewShiftRequestCard = function (shift) {
 							]),
 						_List_fromArray(
 							[
-								A2(
-								$elm$html$Html$span,
-								_List_fromArray(
-									[
-										$elm$html$Html$Attributes$class('mr-2 text-lg')
-									]),
-								_List_fromArray(
-									[
-										$elm$html$Html$text('⏰')
-									])),
 								$elm$html$Html$text(
 								shift.startTime + (' 〜 ' + (shift.endTime + (' ' + (shift.exitByEndTime ? '上' : '受')))))
 							]))
