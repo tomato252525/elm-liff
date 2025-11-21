@@ -17,10 +17,10 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     // 日本時間を基準にする
     const nowJST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }));
     const dayOfWeek = nowJST.getDay(); // 0=日曜, 1=月曜...
-    
+
     // 今週の月曜日までの日数を計算（日曜なら6日前、それ以外は dayOfWeek - 1 日前）
     const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-    
+
     const targetDate = new Date(nowJST);
     targetDate.setDate(nowJST.getDate() - diffToMonday + (offsetWeeks * 7));
 
@@ -37,7 +37,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
   const fetchUserAndShifts = async (userId) => {
     const currentMonday = getMondayDate(0); // 今週の月曜
     const nextMonday = getMondayDate(1);    // 来週の月曜
-    
+
     // 1. ユーザー情報の取得
     const { data: user, error: userError } = await db
       .from('users')
@@ -49,7 +49,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     if (!user) throw new Error('ユーザが見つかりません。');
 
     // 2. シフトデータを並列取得 (3種類)
-    const [requestsResult, currentConfirmedResult, nextConfirmedResult] = await Promise.all([
+    const [requestsResult, currentConfirmedResult, nextConfirmedResult, templateResult] = await Promise.all([
       // A. 来週の希望シフト
       db.from('shift_requests')
         .select('id, date, start_time, end_time, exit_by_end_time, is_available')
@@ -59,22 +59,26 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
       // B. 今週の確定シフト
       db.from('confirmed_shifts')
-        .select('id, date, start_time, end_time, exit_by_end_time, note')
+        .select('id, date, start_time, end_time, state, exit_by_end_time, note')
         .eq('cast_id', userId)
         .eq('week_start_date', currentMonday)
         .order('date', { ascending: true }),
 
       // C. 来週の確定シフト (公開済みの場合のみ取得できる)
       db.from('confirmed_shifts')
-        .select('id, date, start_time, end_time, exit_by_end_time, note')
+        .select('id, date, start_time, end_time, state, exit_by_end_time, note')
         .eq('cast_id', userId)
         .eq('week_start_date', nextMonday)
-        .order('date', { ascending: true })
+        .order('date', { ascending: true }),
+
+      // D. テンプレート取得 (single()はデータがないとエラーになるので maybeSingle() を推奨したいが、JS SDKのverによっては .data チェックで対応)
+      db.from('shift_templates').select('start_time, end_time, exit_by_end_time').eq('user_id', userId).maybeSingle()
     ]);
 
     if (requestsResult.error) throw requestsResult.error;
     if (currentConfirmedResult.error) throw currentConfirmedResult.error;
     if (nextConfirmedResult.error) throw nextConfirmedResult.error;
+    if (templateResult.error) throw templateResult.error;
 
     return {
       user,
@@ -85,9 +89,12 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
       // 来週（希望）
       next_week_start_date: nextMonday,
       next_week_shifts: requestsResult.data || [],
-      
+
       // 来週（確定）
-      next_week_confirmed_shifts: nextConfirmedResult.data || []
+      next_week_confirmed_shifts: nextConfirmedResult.data || [],
+
+      // テンプレ
+      template: templateResult.data
     };
   };
 
@@ -202,10 +209,57 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     });
 
     // ----------------------------------
+    // Port: テンプレート保存処理
+    // ----------------------------------
+    app.ports.saveTemplateRequest?.subscribe(async (templateData) => {
+      if (!db || !currentUserId) return;
+      try {
+        const { error } = await db
+          .from('shift_templates')
+          .upsert({
+            user_id: currentUserId,
+            start_time: templateData.start_time,
+            end_time: templateData.end_time,
+            exit_by_end_time: templateData.exit_by_end_time,
+            updated_at: new Date()
+          });
+
+        if (error) throw error;
+
+        // 保存完了後、最新データを再取得して返す
+        const result = await fetchUserAndShifts(currentUserId);
+        app.ports.saveTemplateResponse?.send(result);
+      } catch (e) {
+        sendError(e);
+      }
+    });
+
+    // ----------------------------------
+    // Port: テンプレート削除処理 (NEW)
+    // ----------------------------------
+    app.ports.deleteTemplateRequest?.subscribe(async () => {
+      if (!db || !currentUserId) return;
+      try {
+        const { error } = await db
+          .from('shift_templates')
+          .delete()
+          .eq('user_id', currentUserId);
+
+        if (error) throw error;
+
+        // 削除後、最新データを再取得して返す（保存時と同じポートを再利用）
+        const result = await fetchUserAndShifts(currentUserId);
+        app.ports.saveTemplateResponse?.send(result);
+      } catch (e) {
+        sendError(e);
+      }
+    });
+
+    // ----------------------------------
     // LIFF初期化 & 認証フロー
     // ----------------------------------
     liff
-      .init({ 
+      .init({
         liffId,
         withLoginOnExternalBrowser: true,
       })
@@ -255,7 +309,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
                 return;
               }
             }
-            
+
             // エラーハンドリング
             const errorMessages = {
               'account_deactivated': 'アカウントが無効化されています。',
@@ -282,7 +336,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
           if (user && token) {
             // ユーザーIDを保持
             currentUserId = user.id;
-            
+
             // 初期データを取得してElmへ送信
             const data = await fetchUserAndShifts(user.id);
             app.ports.deliverVerificationResult.send(data);

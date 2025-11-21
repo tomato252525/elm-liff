@@ -5283,9 +5283,9 @@ var $elm$core$Basics$composeR = F3(
 		return g(
 			f(x));
 	});
-var $author$project$Main$Data = F6(
-	function (user, currentWeekStartDate, currentWeekShifts, nextWeekStartDate, nextWeekShifts, nextWeekConfirmedShifts) {
-		return {currentWeekShifts: currentWeekShifts, currentWeekStartDate: currentWeekStartDate, nextWeekConfirmedShifts: nextWeekConfirmedShifts, nextWeekShifts: nextWeekShifts, nextWeekStartDate: nextWeekStartDate, user: user};
+var $author$project$Main$Data = F7(
+	function (user, template, currentWeekStartDate, currentWeekShifts, nextWeekStartDate, nextWeekShifts, nextWeekConfirmedShifts) {
+		return {currentWeekShifts: currentWeekShifts, currentWeekStartDate: currentWeekStartDate, nextWeekConfirmedShifts: nextWeekConfirmedShifts, nextWeekShifts: nextWeekShifts, nextWeekStartDate: nextWeekStartDate, template: template, user: user};
 	});
 var $author$project$Main$ConfirmedShift = F7(
 	function (id, date, startTime, endTime, state, exitByEndTime, note) {
@@ -5334,11 +5334,11 @@ var $author$project$Main$confirmedShiftDecoder = A8(
 		'note',
 		$elm$json$Json$Decode$nullable($elm$json$Json$Decode$string)));
 var $elm$json$Json$Decode$list = _Json_decodeList;
-var $elm$json$Json$Decode$map6 = _Json_map6;
 var $author$project$Main$ShiftRequest = F6(
 	function (id, date, startTime, endTime, exitByEndTime, isAvailable) {
 		return {date: date, endTime: endTime, exitByEndTime: exitByEndTime, id: id, isAvailable: isAvailable, startTime: startTime};
 	});
+var $elm$json$Json$Decode$map6 = _Json_map6;
 var $author$project$Main$shiftRequestDecoder = A7(
 	$elm$json$Json$Decode$map6,
 	$author$project$Main$ShiftRequest,
@@ -5360,6 +5360,17 @@ var $author$project$Main$shiftRequestDecoder = A7(
 			'exit_by_end_time',
 			$elm$json$Json$Decode$nullable($elm$json$Json$Decode$bool))),
 	A2($elm$json$Json$Decode$field, 'is_available', $elm$json$Json$Decode$bool));
+var $author$project$Main$ShiftTemplate = F3(
+	function (startTime, endTime, exitByEndTime) {
+		return {endTime: endTime, exitByEndTime: exitByEndTime, startTime: startTime};
+	});
+var $elm$json$Json$Decode$map3 = _Json_map3;
+var $author$project$Main$shiftTemplateDecoder = A4(
+	$elm$json$Json$Decode$map3,
+	$author$project$Main$ShiftTemplate,
+	A2($elm$json$Json$Decode$field, 'start_time', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'end_time', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'exit_by_end_time', $elm$json$Json$Decode$bool));
 var $author$project$Main$User = F4(
 	function (id, name, role, lineUserId) {
 		return {id: id, lineUserId: lineUserId, name: name, role: role};
@@ -5375,10 +5386,14 @@ var $author$project$Main$userDecoder = A5(
 		$elm$json$Json$Decode$nullable($elm$json$Json$Decode$string)),
 	A2($elm$json$Json$Decode$field, 'role', $elm$json$Json$Decode$string),
 	A2($elm$json$Json$Decode$field, 'line_user_id', $elm$json$Json$Decode$string));
-var $author$project$Main$dataDecoder = A7(
-	$elm$json$Json$Decode$map6,
+var $author$project$Main$dataDecoder = A8(
+	$elm$json$Json$Decode$map7,
 	$author$project$Main$Data,
 	A2($elm$json$Json$Decode$field, 'user', $author$project$Main$userDecoder),
+	A2(
+		$elm$json$Json$Decode$field,
+		'template',
+		$elm$json$Json$Decode$nullable($author$project$Main$shiftTemplateDecoder)),
 	A2($elm$json$Json$Decode$field, 'current_week_start_date', $elm$json$Json$Decode$string),
 	A2(
 		$elm$json$Json$Decode$field,
@@ -5400,6 +5415,9 @@ var $author$project$Main$deliverVerificationResult = _Platform_incomingPort('del
 var $author$project$Main$ShiftSubmitted = function (a) {
 	return {$: 'ShiftSubmitted', a: a};
 };
+var $author$project$Main$TemplateSaved = function (a) {
+	return {$: 'TemplateSaved', a: a};
+};
 var $author$project$Main$UserArrived = function (a) {
 	return {$: 'UserArrived', a: a};
 };
@@ -5408,10 +5426,13 @@ var $author$project$Main$fromDataPayload = F2(
 		var _v0 = A2($elm$json$Json$Decode$decodeValue, $author$project$Main$dataDecoder, value);
 		if (_v0.$ === 'Ok') {
 			var data = _v0.a;
-			if (source === 'shiftSubmitResponse') {
-				return $author$project$Main$ShiftSubmitted(data);
-			} else {
-				return $author$project$Main$UserArrived(data);
+			switch (source) {
+				case 'saveTemplateResponse':
+					return $author$project$Main$TemplateSaved(data);
+				case 'shiftSubmitResponse':
+					return $author$project$Main$ShiftSubmitted(data);
+				default:
+					return $author$project$Main$UserArrived(data);
 			}
 		} else {
 			var err = _v0.a;
@@ -5431,6 +5452,7 @@ var $elm$core$Result$map = F2(
 		}
 	});
 var $author$project$Main$refreshDataResponse = _Platform_incomingPort('refreshDataResponse', $elm$json$Json$Decode$value);
+var $author$project$Main$saveTemplateResponse = _Platform_incomingPort('saveTemplateResponse', $elm$json$Json$Decode$value);
 var $author$project$Main$shiftSubmitResponse = _Platform_incomingPort('shiftSubmitResponse', $elm$json$Json$Decode$value);
 var $author$project$Main$usernameRegistrationResponse = _Platform_incomingPort('usernameRegistrationResponse', $elm$json$Json$Decode$value);
 var $elm$core$Result$withDefault = F2(
@@ -5461,7 +5483,9 @@ var $author$project$Main$subscriptions = function (_v0) {
 						$elm$core$Result$map($author$project$Main$DataRefreshed),
 						$elm$core$Result$withDefault(
 							$author$project$Main$GotError('データ更新のデコードに失敗しました'))))),
-				$author$project$Main$deliverError($author$project$Main$GotError)
+				$author$project$Main$deliverError($author$project$Main$GotError),
+				$author$project$Main$saveTemplateResponse(
+				$author$project$Main$fromDataPayload('saveTemplateResponse'))
 			]));
 };
 var $author$project$Main$Authenticated = F2(
@@ -5478,11 +5502,19 @@ var $author$project$Main$Register = function (a) {
 	return {$: 'Register', a: a};
 };
 var $author$project$Main$Submitted = {$: 'Submitted'};
+var $author$project$Main$TemplateEditPage = function (a) {
+	return {$: 'TemplateEditPage', a: a};
+};
 var $author$project$Main$Unsubmitted = {$: 'Unsubmitted'};
 var $elm$core$Platform$Cmd$batch = _Platform_batch;
+var $elm$json$Json$Encode$null = _Json_encodeNull;
+var $author$project$Main$deleteTemplateRequest = _Platform_outgoingPort(
+	'deleteTemplateRequest',
+	function ($) {
+		return $elm$json$Json$Encode$null;
+	});
 var $elm$json$Json$Encode$bool = _Json_wrap;
 var $elm$core$Basics$neq = _Utils_notEqual;
-var $elm$json$Json$Encode$null = _Json_encodeNull;
 var $elm$json$Json$Encode$object = function (pairs) {
 	return _Json_wrap(
 		A3(
@@ -5543,6 +5575,21 @@ var $author$project$Main$encodeShiftInputs = F3(
 					A2($elm$json$Json$Encode$list, $author$project$Main$encodeShiftInput, inputs))
 				]));
 	});
+var $author$project$Main$encodeTemplate = function (tmpl) {
+	return $elm$json$Json$Encode$object(
+		_List_fromArray(
+			[
+				_Utils_Tuple2(
+				'start_time',
+				$elm$json$Json$Encode$string(tmpl.startTime)),
+				_Utils_Tuple2(
+				'end_time',
+				$elm$json$Json$Encode$string(tmpl.endTime)),
+				_Utils_Tuple2(
+				'exit_by_end_time',
+				$elm$json$Json$Encode$bool(tmpl.exitByEndTime))
+			]));
+};
 var $elm$core$String$cons = _String_cons;
 var $elm$core$String$fromChar = function (_char) {
 	return A2($elm$core$String$cons, _char, '');
@@ -5811,6 +5858,7 @@ var $author$project$Main$refreshDataRequest = _Platform_outgoingPort(
 	function ($) {
 		return $elm$json$Json$Encode$null;
 	});
+var $author$project$Main$saveTemplateRequest = _Platform_outgoingPort('saveTemplateRequest', $elm$core$Basics$identity);
 var $elm$core$Process$sleep = _Process_sleep;
 var $elm$time$Time$toHour = F2(
 	function (zone, time) {
@@ -5901,6 +5949,27 @@ var $author$project$Main$updateShiftInput = F3(
 					shiftInputs: A2($elm$core$List$map, updateInput, model.shiftInputs)
 				}),
 			$elm$core$Platform$Cmd$none);
+	});
+var $author$project$Main$updateTemplateState = F2(
+	function (model, transform) {
+		var _v0 = model.appState;
+		if ((_v0.$ === 'Authenticated') && (_v0.b.$ === 'TemplateEditPage')) {
+			var data = _v0.a;
+			var tmpl = _v0.b.a;
+			return _Utils_Tuple2(
+				_Utils_update(
+					model,
+					{
+						appState: A2(
+							$author$project$Main$Authenticated,
+							data,
+							$author$project$Main$TemplateEditPage(
+								transform(tmpl)))
+					}),
+				$elm$core$Platform$Cmd$none);
+		} else {
+			return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+		}
 	});
 var $author$project$Main$usernameRegistrationRequest = _Platform_outgoingPort(
 	'usernameRegistrationRequest',
@@ -6030,6 +6099,8 @@ var $author$project$Main$update = F2(
 										appState: A2($author$project$Main$Authenticated, data, $author$project$Main$Home)
 									}),
 								$elm$core$Platform$Cmd$none);
+						case 'Register':
+							return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 						default:
 							return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 					}
@@ -6039,15 +6110,35 @@ var $author$project$Main$update = F2(
 			case 'UpdateShiftAvailability':
 				var date = msg.a;
 				var isAvailable = msg.b;
-				return A3(
-					$author$project$Main$updateShiftInput,
-					date,
-					function (input) {
-						return _Utils_update(
-							input,
-							{isAvailable: isAvailable});
-					},
-					model);
+				var _v6 = model.appState;
+				if (_v6.$ === 'Authenticated') {
+					var data = _v6.a;
+					return A3(
+						$author$project$Main$updateShiftInput,
+						date,
+						function (input) {
+							if (isAvailable) {
+								var _v7 = data.template;
+								if (_v7.$ === 'Just') {
+									var t = _v7.a;
+									return _Utils_update(
+										input,
+										{endTime: t.endTime, exitByEndTime: t.exitByEndTime, isAvailable: true, startTime: t.startTime});
+								} else {
+									return _Utils_update(
+										input,
+										{endTime: '', exitByEndTime: false, isAvailable: true, startTime: ''});
+								}
+							} else {
+								return _Utils_update(
+									input,
+									{isAvailable: false});
+							}
+						},
+						model);
+				} else {
+					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+				}
 			case 'UpdateShiftStartTime':
 				var date = msg.a;
 				var time = msg.b;
@@ -6085,9 +6176,9 @@ var $author$project$Main$update = F2(
 					},
 					model);
 			case 'SubmitShifts':
-				var _v6 = model.appState;
-				if (_v6.$ === 'Authenticated') {
-					var data = _v6.a;
+				var _v8 = model.appState;
+				if (_v8.$ === 'Authenticated') {
+					var data = _v8.a;
 					var shiftsJson = A3($author$project$Main$encodeShiftInputs, data.user.id, data.nextWeekStartDate, model.shiftInputs);
 					return _Utils_Tuple2(
 						_Utils_update(
@@ -6108,10 +6199,99 @@ var $author$project$Main$update = F2(
 							shiftInputs: _List_Nil
 						}),
 					$elm$core$Platform$Cmd$none);
-			default:
+			case 'RefreshData':
 				return _Utils_Tuple2(
 					model,
 					$author$project$Main$refreshDataRequest(_Utils_Tuple0));
+			case 'GoToTemplateEdit':
+				var _v9 = model.appState;
+				if (_v9.$ === 'Authenticated') {
+					var data = _v9.a;
+					var initialState = A2(
+						$elm$core$Maybe$withDefault,
+						{endTime: '', exitByEndTime: false, startTime: ''},
+						data.template);
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								appState: A2(
+									$author$project$Main$Authenticated,
+									data,
+									$author$project$Main$TemplateEditPage(initialState))
+							}),
+						$elm$core$Platform$Cmd$none);
+				} else {
+					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+				}
+			case 'UpdateTemplateStart':
+				var v = msg.a;
+				return A2(
+					$author$project$Main$updateTemplateState,
+					model,
+					function (t) {
+						return _Utils_update(
+							t,
+							{startTime: v});
+					});
+			case 'UpdateTemplateEnd':
+				var v = msg.a;
+				return A2(
+					$author$project$Main$updateTemplateState,
+					model,
+					function (t) {
+						return _Utils_update(
+							t,
+							{endTime: v});
+					});
+			case 'UpdateTemplateExit':
+				var v = msg.a;
+				return A2(
+					$author$project$Main$updateTemplateState,
+					model,
+					function (t) {
+						return _Utils_update(
+							t,
+							{exitByEndTime: v});
+					});
+			case 'SaveTemplate':
+				var _v10 = model.appState;
+				if ((_v10.$ === 'Authenticated') && (_v10.b.$ === 'TemplateEditPage')) {
+					var tmpl = _v10.b.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{isSubmitting: true}),
+						$author$project$Main$saveTemplateRequest(
+							$author$project$Main$encodeTemplate(tmpl)));
+				} else {
+					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+				}
+			case 'TemplateSaved':
+				var data = msg.a;
+				var weekDates = $author$project$Main$generateWeekDates(data.nextWeekStartDate);
+				var isEditPeriod = A2($elm$core$Maybe$withDefault, false, model.showMonToWed);
+				var initialInputs = A2($author$project$Main$initializeShiftInputs, weekDates, data.nextWeekShifts);
+				var hasRequests = !$elm$core$List$isEmpty(data.nextWeekShifts);
+				var hasConfirmedNextWeek = !$elm$core$List$isEmpty(data.nextWeekConfirmedShifts);
+				var shiftState = hasConfirmedNextWeek ? $author$project$Main$Confirmed : (isEditPeriod ? (hasRequests ? $author$project$Main$Submitted : $author$project$Main$Unsubmitted) : $author$project$Main$Pending);
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							appState: A2(
+								$author$project$Main$Authenticated,
+								data,
+								$author$project$Main$NextWeekShiftPage(shiftState)),
+							shiftInputs: initialInputs
+						}),
+					$elm$core$Platform$Cmd$none);
+			default:
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{isSubmitting: true}),
+					$author$project$Main$deleteTemplateRequest(_Utils_Tuple0));
 		}
 	});
 var $elm$html$Html$Attributes$stringProperty = F2(
@@ -6753,6 +6933,7 @@ var $author$project$Main$viewRegister = function (usernameInput) {
 					]))
 			]));
 };
+var $author$project$Main$GoToTemplateEdit = {$: 'GoToTemplateEdit'};
 var $author$project$Main$SubmitShifts = {$: 'SubmitShifts'};
 var $author$project$Main$UpdateShiftEndTime = F2(
 	function (a, b) {
@@ -7149,12 +7330,17 @@ var $author$project$Main$viewShiftPage = F4(
 									$elm$html$Html$text('来週のシフト')
 								])),
 							A2(
-							$elm$html$Html$div,
+							$elm$html$Html$button,
 							_List_fromArray(
 								[
-									$elm$html$Html$Attributes$class('w-8')
+									$elm$html$Html$Events$onClick($author$project$Main$GoToTemplateEdit),
+									$elm$html$Html$Attributes$class('text-sm text-blue-600 font-bold bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition')
 								]),
-							_List_Nil)
+							_List_fromArray(
+								[
+									$elm$html$Html$text(
+									_Utils_eq(data.template, $elm$core$Maybe$Nothing) ? 'テンプレ登録' : 'テンプレ編集')
+								]))
 						])),
 					A2(
 					$elm$html$Html$div,
@@ -7375,6 +7561,258 @@ var $author$project$Main$viewShiftPage = F4(
 				}()
 				]));
 	});
+var $author$project$Main$DeleteTemplate = {$: 'DeleteTemplate'};
+var $author$project$Main$SaveTemplate = {$: 'SaveTemplate'};
+var $author$project$Main$UpdateTemplateEnd = function (a) {
+	return {$: 'UpdateTemplateEnd', a: a};
+};
+var $author$project$Main$UpdateTemplateExit = function (a) {
+	return {$: 'UpdateTemplateExit', a: a};
+};
+var $author$project$Main$UpdateTemplateStart = function (a) {
+	return {$: 'UpdateTemplateStart', a: a};
+};
+var $author$project$Main$viewTemplateEditPage = F3(
+	function (tmpl, isSubmitting, isExisting) {
+		return A2(
+			$elm$html$Html$div,
+			_List_fromArray(
+				[
+					$elm$html$Html$Attributes$class('flex flex-col h-screen bg-gray-50')
+				]),
+			_List_fromArray(
+				[
+					A2(
+					$elm$html$Html$div,
+					_List_fromArray(
+						[
+							$elm$html$Html$Attributes$class('bg-white px-4 py-4 border-b flex justify-between items-center sticky top-0')
+						]),
+					_List_fromArray(
+						[
+							A2(
+							$elm$html$Html$button,
+							_List_fromArray(
+								[
+									$elm$html$Html$Events$onClick($author$project$Main$TogglePage),
+									$elm$html$Html$Attributes$class('text-gray-500')
+								]),
+							_List_fromArray(
+								[
+									$elm$html$Html$text('キャンセル')
+								])),
+							A2(
+							$elm$html$Html$h2,
+							_List_fromArray(
+								[
+									$elm$html$Html$Attributes$class('font-bold')
+								]),
+							_List_fromArray(
+								[
+									$elm$html$Html$text('シフトテンプレート')
+								])),
+							A2(
+							$elm$html$Html$div,
+							_List_fromArray(
+								[
+									$elm$html$Html$Attributes$class('w-16')
+								]),
+							_List_Nil)
+						])),
+					A2(
+					$elm$html$Html$div,
+					_List_fromArray(
+						[
+							$elm$html$Html$Attributes$class('p-6 space-y-6')
+						]),
+					_List_fromArray(
+						[
+							A2(
+							$elm$html$Html$div,
+							_List_fromArray(
+								[
+									$elm$html$Html$Attributes$class('bg-blue-50 p-4 rounded-xl text-sm text-blue-800')
+								]),
+							_List_fromArray(
+								[
+									$elm$html$Html$text('ここで設定した時間は、シフト入力時に「出勤」を選択した際の初期値として自動入力されます。')
+								])),
+							A2(
+							$elm$html$Html$div,
+							_List_fromArray(
+								[
+									$elm$html$Html$Attributes$class('bg-white p-6 rounded-2xl shadow-sm space-y-6')
+								]),
+							_List_fromArray(
+								[
+									A2(
+									$elm$html$Html$div,
+									_List_Nil,
+									_List_fromArray(
+										[
+											A2(
+											$elm$html$Html$label,
+											_List_fromArray(
+												[
+													$elm$html$Html$Attributes$class('block text-sm font-bold text-gray-700 mb-2')
+												]),
+											_List_fromArray(
+												[
+													$elm$html$Html$text('基本出勤時間')
+												])),
+											A2(
+											$elm$html$Html$div,
+											_List_fromArray(
+												[
+													$elm$html$Html$Attributes$class('flex items-center gap-2')
+												]),
+											_List_fromArray(
+												[
+													A2(
+													$elm$html$Html$div,
+													_List_fromArray(
+														[
+															$elm$html$Html$Attributes$class('relative flex-1')
+														]),
+													_List_fromArray(
+														[
+															A2(
+															$elm$html$Html$select,
+															_List_fromArray(
+																[
+																	$elm$html$Html$Attributes$value(tmpl.startTime),
+																	$elm$html$Html$Events$onInput($author$project$Main$UpdateTemplateStart),
+																	$elm$html$Html$Attributes$class('w-full h-12 border rounded-lg text-center bg-gray-50 text-lg font-bold')
+																]),
+															A2(
+																$elm$core$List$map,
+																function (t) {
+																	return A2(
+																		$elm$html$Html$option,
+																		_List_fromArray(
+																			[
+																				$elm$html$Html$Attributes$value(t),
+																				$elm$html$Html$Attributes$selected(
+																				_Utils_eq(t, tmpl.startTime))
+																			]),
+																		_List_fromArray(
+																			[
+																				$elm$html$Html$text(t)
+																			]));
+																},
+																$author$project$Main$generateTimeOptions))
+														])),
+													A2(
+													$elm$html$Html$span,
+													_List_Nil,
+													_List_fromArray(
+														[
+															$elm$html$Html$text('〜')
+														])),
+													A2(
+													$elm$html$Html$div,
+													_List_fromArray(
+														[
+															$elm$html$Html$Attributes$class('relative flex-1')
+														]),
+													_List_fromArray(
+														[
+															A2(
+															$elm$html$Html$select,
+															_List_fromArray(
+																[
+																	$elm$html$Html$Attributes$value(tmpl.endTime),
+																	$elm$html$Html$Events$onInput($author$project$Main$UpdateTemplateEnd),
+																	$elm$html$Html$Attributes$class('w-full h-12 border rounded-lg text-center bg-gray-50 text-lg font-bold')
+																]),
+															A2(
+																$elm$core$List$map,
+																function (t) {
+																	return A2(
+																		$elm$html$Html$option,
+																		_List_fromArray(
+																			[
+																				$elm$html$Html$Attributes$value(t),
+																				$elm$html$Html$Attributes$selected(
+																				_Utils_eq(t, tmpl.endTime))
+																			]),
+																		_List_fromArray(
+																			[
+																				$elm$html$Html$text(t)
+																			]));
+																},
+																$author$project$Main$generateTimeOptions))
+														]))
+												]))
+										])),
+									A2(
+									$elm$html$Html$label,
+									_List_fromArray(
+										[
+											$elm$html$Html$Attributes$class('flex items-center gap-3 p-3 border rounded-xl hover:bg-gray-50 cursor-pointer')
+										]),
+									_List_fromArray(
+										[
+											A2(
+											$elm$html$Html$input,
+											_List_fromArray(
+												[
+													$elm$html$Html$Attributes$type_('checkbox'),
+													$elm$html$Html$Attributes$checked(tmpl.exitByEndTime),
+													$elm$html$Html$Events$onClick(
+													$author$project$Main$UpdateTemplateExit(!tmpl.exitByEndTime)),
+													$elm$html$Html$Attributes$class('h-5 w-5 text-blue-600 rounded')
+												]),
+											_List_Nil),
+											A2(
+											$elm$html$Html$span,
+											_List_fromArray(
+												[
+													$elm$html$Html$Attributes$class('font-bold text-gray-700')
+												]),
+											_List_fromArray(
+												[
+													$elm$html$Html$text('ラスト上がり')
+												]))
+										]))
+								]))
+						])),
+					A2(
+					$elm$html$Html$div,
+					_List_fromArray(
+						[
+							$elm$html$Html$Attributes$class('mt-auto p-4 bg-white border-t safe-area-bottom space-y-3')
+						]),
+					_List_fromArray(
+						[
+							A2(
+							$elm$html$Html$button,
+							_List_fromArray(
+								[
+									$elm$html$Html$Events$onClick($author$project$Main$SaveTemplate),
+									$elm$html$Html$Attributes$disabled(isSubmitting),
+									$elm$html$Html$Attributes$class('w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition disabled:opacity-50')
+								]),
+							_List_fromArray(
+								[
+									$elm$html$Html$text(
+									isSubmitting ? '処理中...' : '保存して戻る')
+								])),
+							isExisting ? A2(
+							$elm$html$Html$button,
+							_List_fromArray(
+								[
+									$elm$html$Html$Events$onClick($author$project$Main$DeleteTemplate),
+									$elm$html$Html$Attributes$disabled(isSubmitting),
+									$elm$html$Html$Attributes$class('w-full text-red-500 font-bold py-3 rounded-xl hover:bg-red-50 active:scale-95 transition disabled:opacity-50')
+								]),
+							_List_fromArray(
+								[
+									$elm$html$Html$text('テンプレートを削除')
+								])) : $elm$html$Html$text('')
+						]))
+				]));
+	});
 var $author$project$Main$view = function (model) {
 	return A2(
 		$elm$html$Html$div,
@@ -7397,9 +7835,16 @@ var $author$project$Main$view = function (model) {
 						case 'Register':
 							var usernameInput = page.a;
 							return $author$project$Main$viewRegister(usernameInput);
-						default:
+						case 'NextWeekShiftPage':
 							var shiftState = page.a;
 							return A4($author$project$Main$viewShiftPage, data, shiftState, model.shiftInputs, model.isSubmitting);
+						default:
+							var tmpl = page.a;
+							return A3(
+								$author$project$Main$viewTemplateEditPage,
+								tmpl,
+								model.isSubmitting,
+								!_Utils_eq(data.template, $elm$core$Maybe$Nothing));
 					}
 				}
 			}()
