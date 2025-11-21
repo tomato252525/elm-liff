@@ -6948,6 +6948,27 @@ var $author$project$Main$viewRegister = function (usernameInput) {
 };
 var $author$project$Main$GoToTemplateEdit = {$: 'GoToTemplateEdit'};
 var $author$project$Main$SubmitShifts = {$: 'SubmitShifts'};
+var $elm$core$List$any = F2(
+	function (isOkay, list) {
+		any:
+		while (true) {
+			if (!list.b) {
+				return false;
+			} else {
+				var x = list.a;
+				var xs = list.b;
+				if (isOkay(x)) {
+					return true;
+				} else {
+					var $temp$isOkay = isOkay,
+						$temp$list = xs;
+					isOkay = $temp$isOkay;
+					list = $temp$list;
+					continue any;
+				}
+			}
+		}
+	});
 var $author$project$Main$UpdateShiftEndTime = F2(
 	function (a, b) {
 		return {$: 'UpdateShiftEndTime', a: a, b: b};
@@ -7531,6 +7552,12 @@ var $author$project$Main$viewShiftPage = F4(
 						case 'Confirmed':
 							return $elm$html$Html$text('');
 						default:
+							var hasInputError = A2(
+								$elm$core$List$any,
+								function (input) {
+									return input.isAvailable && ((input.startTime === '') || (input.endTime === ''));
+								},
+								shiftInputs);
 							return A2(
 								$elm$html$Html$div,
 								_List_fromArray(
@@ -7552,8 +7579,9 @@ var $author$project$Main$viewShiftPage = F4(
 												_List_fromArray(
 													[
 														$elm$html$Html$Events$onClick($author$project$Main$SubmitShifts),
-														$elm$html$Html$Attributes$disabled(isSubmitting),
-														$elm$html$Html$Attributes$class('w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl shadow-lg transition flex justify-center items-center disabled:opacity-70')
+														$elm$html$Html$Attributes$disabled(isSubmitting || hasInputError),
+														$elm$html$Html$Attributes$class(
+														hasInputError ? 'w-full bg-gray-400 text-white font-bold py-4 rounded-2xl shadow-none cursor-not-allowed flex justify-center items-center transition-colors' : 'w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl shadow-lg transition flex justify-center items-center disabled:opacity-70')
 													]),
 												_List_fromArray(
 													[
@@ -7565,7 +7593,7 @@ var $author$project$Main$viewShiftPage = F4(
 															]),
 														_List_Nil) : $elm$html$Html$text(''),
 														$elm$html$Html$text(
-														isSubmitting ? '送信中...' : 'この内容で提出する')
+														isSubmitting ? '送信中...' : (hasInputError ? '未入力の時間があります' : 'この内容で提出する'))
 													]))
 											]))
 									]));
