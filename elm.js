@@ -5760,24 +5760,22 @@ var $elm$core$List$isEmpty = function (xs) {
 		return false;
 	}
 };
-var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
-var $elm$core$Basics$not = _Basics_not;
-var $author$project$Main$refreshDataRequest = _Platform_outgoingPort(
-	'refreshDataRequest',
-	function ($) {
-		return $elm$json$Json$Encode$null;
-	});
-var $author$project$Main$saveTemplateRequest = _Platform_outgoingPort('saveTemplateRequest', $elm$core$Basics$identity);
 var $author$project$Main$jst = A2($elm$time$Time$customZone, 9 * 60, _List_Nil);
-var $elm$time$Time$posixToMillis = function (_v0) {
-	var millis = _v0.a;
-	return millis;
-};
-var $elm$core$Process$sleep = _Process_sleep;
+var $elm$time$Time$Fri = {$: 'Fri'};
+var $elm$time$Time$Mon = {$: 'Mon'};
+var $elm$time$Time$Sat = {$: 'Sat'};
+var $elm$time$Time$Sun = {$: 'Sun'};
+var $elm$time$Time$Thu = {$: 'Thu'};
+var $elm$time$Time$Tue = {$: 'Tue'};
+var $elm$time$Time$Wed = {$: 'Wed'};
 var $elm$time$Time$flooredDiv = F2(
 	function (numerator, denominator) {
 		return $elm$core$Basics$floor(numerator / denominator);
 	});
+var $elm$time$Time$posixToMillis = function (_v0) {
+	var millis = _v0.a;
+	return millis;
+};
 var $elm$time$Time$toAdjustedMinutesHelp = F3(
 	function (defaultOffset, posixMinutes, eras) {
 		toAdjustedMinutesHelp:
@@ -5814,6 +5812,54 @@ var $elm$time$Time$toAdjustedMinutes = F2(
 				60000),
 			eras);
 	});
+var $elm$time$Time$toWeekday = F2(
+	function (zone, time) {
+		var _v0 = A2(
+			$elm$core$Basics$modBy,
+			7,
+			A2(
+				$elm$time$Time$flooredDiv,
+				A2($elm$time$Time$toAdjustedMinutes, zone, time),
+				60 * 24));
+		switch (_v0) {
+			case 0:
+				return $elm$time$Time$Thu;
+			case 1:
+				return $elm$time$Time$Fri;
+			case 2:
+				return $elm$time$Time$Sat;
+			case 3:
+				return $elm$time$Time$Sun;
+			case 4:
+				return $elm$time$Time$Mon;
+			case 5:
+				return $elm$time$Time$Tue;
+			default:
+				return $elm$time$Time$Wed;
+		}
+	});
+var $author$project$Main$isMonToWed = function (now) {
+	var _v0 = A2($elm$time$Time$toWeekday, $author$project$Main$jst, now);
+	switch (_v0.$) {
+		case 'Mon':
+			return true;
+		case 'Tue':
+			return true;
+		case 'Wed':
+			return true;
+		default:
+			return false;
+	}
+};
+var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
+var $elm$core$Basics$not = _Basics_not;
+var $author$project$Main$refreshDataRequest = _Platform_outgoingPort(
+	'refreshDataRequest',
+	function ($) {
+		return $elm$json$Json$Encode$null;
+	});
+var $author$project$Main$saveTemplateRequest = _Platform_outgoingPort('saveTemplateRequest', $elm$core$Basics$identity);
+var $elm$core$Process$sleep = _Process_sleep;
 var $elm$time$Time$toHour = F2(
 	function (zone, time) {
 		return A2(
@@ -5944,7 +5990,7 @@ var $author$project$Main$update = F2(
 		switch (msg.$) {
 			case 'GotNow':
 				var now = msg.a;
-				var isMonWed = true;
+				var isMonWed = $author$project$Main$isMonToWed(now);
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
