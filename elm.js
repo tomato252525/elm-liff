@@ -7566,11 +7566,11 @@ var $author$project$Main$viewTemplateEditPage = F3(
 							_List_fromArray(
 								[
 									$elm$html$Html$Events$onClick($author$project$Main$TogglePage),
-									$elm$html$Html$Attributes$class('text-gray-500 hover:bg-gray-100')
+									$elm$html$Html$Attributes$class('text-gray-500 hover:bg-gray-100 p-2 rounded-full')
 								]),
 							_List_fromArray(
 								[
-									$elm$html$Html$text('キャンセル')
+									$elm$html$Html$text('✕ 閉じる')
 								])),
 							A2(
 							$elm$html$Html$h2,
