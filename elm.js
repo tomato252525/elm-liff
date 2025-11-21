@@ -6428,12 +6428,34 @@ var $author$project$Main$formatDateWithWeekday = function (dateStr) {
 	return formatted + (' (' + (weekday + ')'));
 };
 var $elm$html$Html$h3 = _VirtualDom_node('h3');
+var $elm$html$Html$span = _VirtualDom_node('span');
 var $author$project$Main$viewConfirmedShiftCard = function (shift) {
+	var rightContent = (shift.state === 'absenteeism') ? A2(
+		$elm$html$Html$span,
+		_List_fromArray(
+			[
+				$elm$html$Html$Attributes$class('ml-auto text-red-600 font-bold text-sm bg-white px-3 py-1 rounded-full shadow-sm')
+			]),
+		_List_fromArray(
+			[
+				$elm$html$Html$text('休み')
+			])) : A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				$elm$html$Html$Attributes$class('ml-auto text-gray-600 font-bold text-lg')
+			]),
+		_List_fromArray(
+			[
+				$elm$html$Html$text(
+				shift.startTime + (' 〜 ' + (shift.endTime + (' ' + (shift.exitByEndTime ? '上' : '受')))))
+			]));
+	var bgClass = (shift.state !== 'no_change') ? 'bg-red-50 border-red-100' : 'bg-white border-gray-100';
 	return A2(
 		$elm$html$Html$div,
 		_List_fromArray(
 			[
-				$elm$html$Html$Attributes$class('bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-stretch relative overflow-hidden')
+				$elm$html$Html$Attributes$class(bgClass + ' rounded-2xl p-4 shadow-sm border flex flex-col relative overflow-hidden')
 			]),
 		_List_fromArray(
 			[
@@ -6441,67 +6463,41 @@ var $author$project$Main$viewConfirmedShiftCard = function (shift) {
 				$elm$html$Html$div,
 				_List_fromArray(
 					[
-						$elm$html$Html$Attributes$class('absolute left-0 top-0 bottom-0 w-1.5 bg-green-500')
-					]),
-				_List_Nil),
-				A2(
-				$elm$html$Html$div,
-				_List_fromArray(
-					[
-						$elm$html$Html$Attributes$class('flex-1 pl-3')
+						$elm$html$Html$Attributes$class('flex items-center px-3')
 					]),
 				_List_fromArray(
 					[
 						A2(
-						$elm$html$Html$div,
+						$elm$html$Html$h3,
 						_List_fromArray(
 							[
-								$elm$html$Html$Attributes$class('flex justify-between items-start mb-1')
-							]),
-						_List_fromArray(
-							[
-								A2(
-								$elm$html$Html$h3,
-								_List_fromArray(
-									[
-										$elm$html$Html$Attributes$class('font-bold text-lg text-gray-800')
-									]),
-								_List_fromArray(
-									[
-										$elm$html$Html$text(
-										$author$project$Main$formatDateWithWeekday(shift.date))
-									]))
-							])),
-						A2(
-						$elm$html$Html$div,
-						_List_fromArray(
-							[
-								$elm$html$Html$Attributes$class('flex items-center text-gray-600 font-medium text-base')
+								$elm$html$Html$Attributes$class('font-bold text-lg text-gray-800')
 							]),
 						_List_fromArray(
 							[
 								$elm$html$Html$text(
-								shift.startTime + (' 〜 ' + (shift.endTime + (' ' + (shift.exitByEndTime ? '上' : '受')))))
+								$author$project$Main$formatDateWithWeekday(shift.date))
 							])),
-						function () {
-						var _v0 = shift.note;
-						if (_v0.$ === 'Just') {
-							var n = _v0.a;
-							return $elm$core$String$isEmpty(n) ? $elm$html$Html$text('') : A2(
-								$elm$html$Html$div,
-								_List_fromArray(
-									[
-										$elm$html$Html$Attributes$class('mt-3 bg-yellow-50 text-yellow-800 text-xs p-2 rounded-lg')
-									]),
-								_List_fromArray(
-									[
-										$elm$html$Html$text('💬 ' + n)
-									]));
-						} else {
-							return $elm$html$Html$text('');
-						}
-					}()
-					]))
+						rightContent
+					])),
+				function () {
+				var _v0 = shift.note;
+				if (_v0.$ === 'Just') {
+					var n = _v0.a;
+					return $elm$core$String$isEmpty(n) ? $elm$html$Html$text('') : A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class('mt-3 mx-3 bg-yellow-50 text-yellow-800 text-xs p-2 rounded-lg')
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('💬 ' + n)
+							]));
+				} else {
+					return $elm$html$Html$text('');
+				}
+			}()
 			]));
 };
 var $author$project$Main$viewHome = F2(
@@ -7008,7 +7004,6 @@ var $author$project$Main$generateTimeOptions = function () {
 var $elm$html$Html$option = _VirtualDom_node('option');
 var $elm$html$Html$select = _VirtualDom_node('select');
 var $elm$html$Html$Attributes$selected = $elm$html$Html$Attributes$boolProperty('selected');
-var $elm$html$Html$span = _VirtualDom_node('span');
 var $author$project$Main$UpdateShiftAvailability = F2(
 	function (a, b) {
 		return {$: 'UpdateShiftAvailability', a: a, b: b};
