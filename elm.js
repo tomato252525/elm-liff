@@ -6056,7 +6056,23 @@ var $author$project$Main$update = F2(
 						case 'Register':
 							return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 						default:
-							return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+							var weekDates = $author$project$Main$generateWeekDates(data.nextWeekStartDate);
+							var isEditPeriod = A2($elm$core$Maybe$withDefault, false, model.showMonToWed);
+							var initialInputs = A2($author$project$Main$initializeShiftInputs, weekDates, data.nextWeekShifts);
+							var hasRequests = !$elm$core$List$isEmpty(data.nextWeekShifts);
+							var hasConfirmedNextWeek = !$elm$core$List$isEmpty(data.nextWeekConfirmedShifts);
+							var shiftState = hasConfirmedNextWeek ? $author$project$Main$Confirmed : (isEditPeriod ? (hasRequests ? $author$project$Main$Submitted : $author$project$Main$Unsubmitted) : $author$project$Main$Pending);
+							return _Utils_Tuple2(
+								_Utils_update(
+									model,
+									{
+										appState: A2(
+											$author$project$Main$Authenticated,
+											data,
+											$author$project$Main$NextWeekShiftPage(shiftState)),
+										shiftInputs: initialInputs
+									}),
+								$elm$core$Platform$Cmd$none);
 					}
 				} else {
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
@@ -7550,7 +7566,7 @@ var $author$project$Main$viewTemplateEditPage = F3(
 							_List_fromArray(
 								[
 									$elm$html$Html$Events$onClick($author$project$Main$TogglePage),
-									$elm$html$Html$Attributes$class('text-gray-500')
+									$elm$html$Html$Attributes$class('text-gray-500 hover:bg-gray-100')
 								]),
 							_List_fromArray(
 								[
