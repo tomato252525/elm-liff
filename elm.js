@@ -7539,7 +7539,7 @@ var $author$project$Main$viewShiftPage = F4(
 										$elm$html$Html$div,
 										_List_fromArray(
 											[
-												$elm$html$Html$Attributes$class('space-y-4 pb-8')
+												$elm$html$Html$Attributes$class('space-y-4 pb-20')
 											]),
 										A2($elm$core$List$map, $author$project$Main$viewShiftInputRow, shiftInputs));
 							}
@@ -7858,7 +7858,7 @@ var $author$project$Main$view = function (model) {
 		$elm$html$Html$div,
 		_List_fromArray(
 			[
-				$elm$html$Html$Attributes$class('min-h-screen bg-gray-50 text-gray-800 font-sans pb-10 safe-area-padding')
+				$elm$html$Html$Attributes$class('min-h-screen bg-gray-50 text-gray-800 font-sans safe-area-padding')
 			]),
 		_List_fromArray(
 			[
