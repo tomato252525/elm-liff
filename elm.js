@@ -6891,7 +6891,7 @@ var $author$project$Main$viewRegister = function (usernameInput) {
 							]),
 						_List_fromArray(
 							[
-								$elm$html$Html$text('アプリで使用する名前を登録してください')
+								$elm$html$Html$text('あなたの源氏名を登録してください')
 							])),
 						A2(
 						$elm$html$Html$form,
