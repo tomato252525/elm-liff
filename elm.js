@@ -7004,7 +7004,7 @@ var $author$project$Main$generateTimeOptions = function () {
 			return $elm$core$String$fromInt(h) + (':' + m);
 		});
 	var minutes = _List_fromArray(
-		['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55']);
+		['00', '10', '20', '30', '40', '50']);
 	var hours = A2($elm$core$List$range, 10, 23);
 	return A2(
 		$elm$core$List$cons,
