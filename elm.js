@@ -7539,7 +7539,7 @@ var $author$project$Main$viewShiftPage = F4(
 										$elm$html$Html$div,
 										_List_fromArray(
 											[
-												$elm$html$Html$Attributes$class('space-y-4 mb-8')
+												$elm$html$Html$Attributes$class('space-y-4 pb-8')
 											]),
 										A2($elm$core$List$map, $author$project$Main$viewShiftInputRow, shiftInputs));
 							}
@@ -7821,7 +7821,7 @@ var $author$project$Main$viewTemplateEditPage = F3(
 					$elm$html$Html$div,
 					_List_fromArray(
 						[
-							$elm$html$Html$Attributes$class('mt-auto p-4 bg-white border-t safe-area-bottom space-y-3')
+							$elm$html$Html$Attributes$class('fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 safe-area-bottom')
 						]),
 					_List_fromArray(
 						[
