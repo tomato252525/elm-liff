@@ -7539,7 +7539,7 @@ var $author$project$Main$viewShiftPage = F4(
 										$elm$html$Html$div,
 										_List_fromArray(
 											[
-												$elm$html$Html$Attributes$class('space-y-4 pb-20')
+												$elm$html$Html$Attributes$class('space-y-4 pb-24')
 											]),
 										A2($elm$core$List$map, $author$project$Main$viewShiftInputRow, shiftInputs));
 							}
