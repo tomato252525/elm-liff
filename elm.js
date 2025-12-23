@@ -6346,7 +6346,11 @@ var $author$project$Main$formatDateShort = function (dateStr) {
 			A2(
 				$elm$core$Maybe$map,
 				function (m) {
-					return $elm$core$String$fromInt(m) + ('/' + day);
+					return A3(
+						$elm$core$String$padLeft,
+						2,
+						_Utils_chr('0'),
+						$elm$core$String$fromInt(m)) + ('/' + day);
 				},
 				$elm$core$String$toInt(month)));
 	} else {
@@ -6430,6 +6434,9 @@ var $author$project$Main$formatDateWithWeekday = function (dateStr) {
 var $elm$html$Html$h3 = _VirtualDom_node('h3');
 var $elm$html$Html$span = _VirtualDom_node('span');
 var $author$project$Main$viewConfirmedShiftCard = function (shift) {
+	var formatTime = function (timeStr) {
+		return A2($elm$core$String$dropRight, 3, timeStr);
+	};
 	var rightContent = (shift.state === 'absenteeism') ? A2(
 		$elm$html$Html$span,
 		_List_fromArray(
@@ -6448,7 +6455,7 @@ var $author$project$Main$viewConfirmedShiftCard = function (shift) {
 		_List_fromArray(
 			[
 				$elm$html$Html$text(
-				shift.startTime + (' 〜 ' + (shift.endTime + (' ' + (shift.exitByEndTime ? '上' : '受')))))
+				formatTime(shift.startTime) + (' 〜 ' + (formatTime(shift.endTime) + (' ' + (shift.exitByEndTime ? '上' : '受')))))
 			]));
 	var bgClass = (shift.state !== 'no_change') ? 'bg-red-50 border-red-100' : 'bg-white border-gray-100';
 	return A2(
